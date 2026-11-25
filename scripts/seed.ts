@@ -14,12 +14,13 @@ async function main() {
   const client = postgres(url, { prepare: false });
   const db = drizzle(client, { schema });
 
+  // Mevcut doğrulanmış işletme ayarlarını asla başlangıç verisiyle ezmeyiz.
   await db
     .insert(schema.businessSettings)
     .values({ id: 1, data: seed.business })
-    .onConflictDoUpdate({ target: schema.businessSettings.id, set: { data: seed.business } });
+    .onConflictDoNothing({ target: schema.businessSettings.id });
 
-  for (const job of seed.jobs) {
+  for (const job of seed.jobs.filter((item) => item.isExample !== true)) {
     const j = job as unknown as {
       id: string; title: string; slug: string; category: string; vehicle: string;
       symptom: string; diagnosis: string; application: string; result: string;

@@ -31,6 +31,9 @@ export interface Business {
   verified: boolean;
   heroTitle: string;
   heroSubtitle: string;
+  heroImage: string;
+  heroImageAlt: string;
+  heroPhotoApproved: boolean;
   services: Service[];
 }
 
@@ -53,6 +56,7 @@ export interface Job {
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  /** Eski veritabanlarında kalan örnek kayıtları ayırt etmek için korunur. */
   isExample?: boolean;
 }
 

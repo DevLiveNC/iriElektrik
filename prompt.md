@@ -15,7 +15,7 @@ Bu dosyadaki “Projeye özel UI skill’i” bölümünü başlangıçta uygula
 
 ## 2. Görsel yön ve landing page
 
-Atölyenin belgesel fotoğrafları etrafında bir editoryal düzen kur. Kırık beyaz #F5F3EC, koyu petrol #102A2A, grafit #151917 ve eylem vurgusu için limon #D9F34A kullan. Limon zeminde koyu metin uygula. Başlıklarda Türkçe karakterleri iyi çizilmiş dar bir tipografi (ör. Barlow Condensed), metinde Instrument Sans kullan. Küçük bir kablo izi motifi yalnızca bölüm geçişinde görünsün. Tam ekran animasyon, cam kart dizileri, stok otomobil reklamı estetiği, dekoratif sayaç ve sahte sosyal kanıt kullanma. İçerik bloklarının ritmini ölçek ve boşlukla kur.
+Atölyenin belgesel fotoğrafları etrafında bir editoryal düzen kur. Porselen #F7F6F2 zemin, gece mavisi #151D2E üst gezinme ve iletişim bandı, birincil eylemde kobalt #2452CC, kısa başlık çizgileri ve küçük ikonlarda bakır #B86B45, ikincil yüzeyde soğuk gri #E8EDF4, ince ayırıcılarda #D4DAE5 kullan. Bakırı küçük gövde metninde kullanma. Başlıklarda Türkçe karakterleri iyi çizilmiş Barlow Condensed, gövdede Instrument Sans kullan. Bölümler ince ayırıcılarla ayrılır; dalgalı kablo motifi, tam ekran animasyon, parlayan gradyanlar, tekrar eden kartlar, dekoratif sayaç ve sahte sosyal kanıt kullanma. İçerik bloklarının ritmini ölçek, fotoğraf ve boşlukla kur.
 
 - Üst gezinme: marka, Hizmetler, Yapılan işler, Konum, Hemen ara. Mobilde basit menü ve alt güvenli alana oturan “Ara” / “Yol tarifi” çubuğu. Çubuk sayfa içeriğini ve klavye odağını kapatmasın.
 - Hero: solda “Aracın elektriğini çözüyoruz.” ve doğrulanmış bölgeyle kısa hizmet tanımı, sağda açık kaput altında çalışan ustanın ellerini gösteren gerçek atölye fotoğrafı. “Hemen ara” ve “Yol tarifi” ilk ekranda. Mobilde başlık ve eylemler fotoğraftan önce gelir.
@@ -23,7 +23,7 @@ Atölyenin belgesel fotoğrafları etrafında bir editoryal düzen kur. Kırık 
 - Yapılan işler: ana sayfada öne çıkan işler, /yapilan-isler sayfasında arşiv, /yapilan-isler/[slug] sayfasında fotoğraflar ve “Belirti / Teşhis / Uygulama / Sonuç”. Yeterli içerik varsa kategori filtresi. Boş içerikte bölümü uygun biçimde gizle veya sade bir durum göster.
 - Konum ve iletişim: doğrulanmış adres, telefon, saatler, harita yönlendirmesi ve varsa WhatsApp. Ağır harita embed’i eylem sonrasına bırak. Saat verisi yoksa açık/kapalı etiketi basma. Mobilde CTA’lar dokunma alanı, safe area ve ekran klavyesiyle test edilsin.
 
-İşletme adı, ilçe/şehir, adres, koordinat, telefon, saat ve profil URL’si için doğrulanmış veri bekle. “İri Oto Elektrik” çalışma adıdır. Eksik alanları tasarım önizlemesinde örnek olarak açıkça belirt, üretimde tahmini bilgi ve boş bağlantı gösterme. Gerçek onarım olarak temsili görsel yayımlama. Gerçek fotoğraflarda müşteri izni, plaka/yüz maskelemesi ve anlamlı alt metin iste.
+İşletme adı, ilçe/şehir, adres, koordinat, telefon, saat ve profil URL’si için doğrulanmış veri bekle. “İri Oto Elektrik” çalışma adıdır. Onaylı fotoğraf yoksa tasarım önizlemesinde açıkça etiketlenmiş temsili fotoğraf kullan; üretimde geçici olarak kompakt tipografik hero göster. Üretimde tahmini bilgi, temsili görsel, örnek onarım veya boş bağlantı yayımlama. Gerçek fotoğraflarda müşteri izni, plaka/yüz maskelemesi ve anlamlı alt metin iste.
 
 ### Projeye özel UI skill’i
 

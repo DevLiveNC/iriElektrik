@@ -2,14 +2,23 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import ExampleBadge from "@/components/ExampleBadge";
-import { getJobBySlug, getRedirect, listJobs } from "@/lib/store";
+import { getPublishedJobBySlug, getRedirect, listPublishedJobs } from "@/lib/store";
+import { isIndexableProduction } from "@/lib/seo";
 
 export const revalidate = 3600;
 
+const dateFmt = new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium" });
+
+const STEPS = [
+  { key: "symptom", label: "Belirti" },
+  { key: "diagnosis", label: "Teşhis" },
+  { key: "application", label: "Uygulama" },
+  { key: "result", label: "Sonuç" },
+] as const;
+
 export async function generateStaticParams() {
-  const jobs = await listJobs({ status: "published" });
-  return jobs.map((j) => ({ slug: j.slug }));
+  const jobs = await listPublishedJobs();
+  return jobs.map((job) => ({ slug: job.slug }));
 }
 
 export async function generateMetadata({
@@ -18,8 +27,13 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const job = await getJobBySlug(slug);
-  if (!job || job.status !== "published") return { title: "Kayıt bulunamadı" };
+  const job = await getPublishedJobBySlug(slug);
+  if (!job) {
+    return {
+      title: "Kayıt bulunamadı",
+      robots: { index: false, follow: false },
+    };
+  }
   const description = `${job.title} — Belirti: ${job.symptom} Sonuç: ${job.result}`.slice(0, 160);
   return {
     title: job.title,
@@ -29,84 +43,85 @@ export async function generateMetadata({
       type: "article",
       title: job.title,
       description,
-      images: job.cover ? [{ url: job.cover, alt: job.alt || job.title }] : undefined,
+      url: `/yapilan-isler/${job.slug}`,
+      images: [{ url: job.cover, alt: job.alt }],
     },
+    robots: isIndexableProduction()
+      ? { index: true, follow: true }
+      : { index: false, follow: false },
   };
 }
 
-const STEPS = [
-  { key: "symptom", label: "Belirti" },
-  { key: "diagnosis", label: "Teşhis" },
-  { key: "application", label: "Uygulama" },
-  { key: "result", label: "Sonuç" },
-] as const;
-
-export default async function JobDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function JobDetailPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   const { slug } = await params;
-  const job = await getJobBySlug(slug);
+  const job = await getPublishedJobBySlug(slug);
 
-  if (!job || job.status !== "published") {
+  if (!job) {
     const target = await getRedirect(slug);
-    if (target) redirect(`/yapilan-isler/${target}`);
+    if (target) {
+      const redirected = await getPublishedJobBySlug(target);
+      if (redirected) redirect(`/yapilan-isler/${redirected.slug}`);
+    }
     notFound();
   }
 
   const gallery = job.gallery.filter(Boolean);
+  const publishedAt = job.publishedAt ? dateFmt.format(new Date(job.publishedAt)) : null;
 
   return (
-    <article className="mx-auto max-w-4xl px-4 py-10 sm:px-6 md:py-14">
-      <Link href="/yapilan-isler" className="font-bold text-petrol underline underline-offset-4 hover:text-petrol-2">
+    <article className="job-detail">
+      <Link href="/yapilan-isler" className="breadcrumb">
         Tüm işler
       </Link>
-      <p className="mt-6 text-sm font-bold uppercase tracking-wide text-petrol/60">{job.category}</p>
-      <h1 className="balance mt-1 font-display text-5xl font-bold leading-[0.95] text-petrol sm:text-6xl">
-        {job.title}
-      </h1>
-      <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-graphite/75">
-        {job.vehicle && <span>{job.vehicle}</span>}
-        {job.isExample && <ExampleBadge label="Örnek kayıt" />}
-      </div>
+      <p className="job-category">{job.category}</p>
+      <h1 className="job-title">{job.title}</h1>
+      <p className="job-meta">
+        {job.vehicle ? `${job.vehicle} · ` : ""}
+        {publishedAt ?? "Yayımlanmış kayıt"}
+      </p>
 
-      <figure className="mt-8">
-        <div className="relative aspect-[3/2] overflow-hidden rounded-2xl bg-paper-2">
+      <figure className="job-cover">
+        <div className="job-cover__frame">
           <Image
-            src={job.cover || "/placeholder-is.svg"}
-            alt={job.alt || job.title}
+            src={job.cover}
+            alt={job.alt}
             fill
             priority
-            sizes="(min-width: 896px) 896px, 100vw"
-            className="object-cover"
+            sizes="(min-width: 1024px) 960px, 100vw"
+            className="job-cover__image"
           />
         </div>
-        <figcaption className="mt-2 text-sm text-graphite/70">
-          {job.alt || "Onarım fotoğrafı"}
-        </figcaption>
+        <figcaption className="job-cover__caption">{job.alt}</figcaption>
       </figure>
 
-      <dl className="mt-10 divide-y divide-petrol/15 border-y border-petrol/15">
+      <dl className="job-steps">
         {STEPS.map((step) => (
-          <div key={step.key} className="grid gap-1 py-5 md:grid-cols-12 md:gap-6">
-            <dt className="font-display text-2xl font-semibold text-petrol md:col-span-3">{step.label}</dt>
-            <dd className="leading-relaxed text-graphite/90 md:col-span-9">{job[step.key]}</dd>
+          <div key={step.key} className="job-step">
+            <dt className="job-step__label">{step.label}</dt>
+            <dd className="job-step__value">{job[step.key]}</dd>
           </div>
         ))}
       </dl>
 
       {gallery.length > 0 && (
-        <section aria-labelledby="galeri-baslik" className="mt-10">
-          <h2 id="galeri-baslik" className="font-display text-3xl font-semibold text-petrol">
+        <section aria-labelledby="galeri-baslik" className="gallery">
+          <h2 id="galeri-baslik" className="section-title">
             Fotoğraflar
           </h2>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            {gallery.map((src, i) => (
-              <div key={`${src}-${i}`} className="relative aspect-[3/2] overflow-hidden rounded-xl bg-paper-2">
+          <div className="gallery__grid">
+            {gallery.map((src, index) => (
+              <div key={`${src}-${index}`} className="gallery__frame">
                 <Image
                   src={src}
-                  alt={`${job.title} — fotoğraf ${i + 1}`}
+                  alt={`${job.title} — fotoğraf ${index + 1}`}
                   fill
                   loading="lazy"
                   sizes="(min-width: 640px) 50vw, 100vw"
-                  className="object-cover"
+                  className="gallery__image"
                 />
               </div>
             ))}

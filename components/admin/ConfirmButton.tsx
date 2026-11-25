@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useId, useRef, useTransition } from "react";
 
 interface Props {
   label: string;
@@ -10,49 +10,49 @@ interface Props {
   danger?: boolean;
 }
 
-/** Kritik işlemler için onay dialogu. */
+/** Kritik işlemler için klavye ile kullanılabilen yerel onay penceresi. */
 export default function ConfirmButton({ label, confirmTitle, confirmText, action, danger }: Props) {
+  const id = useId();
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const [pending, startTransition] = useTransition();
 
   return (
     <>
       <button
         type="button"
         onClick={() => dialogRef.current?.showModal()}
-        className={`rounded-full px-4 py-2 text-sm font-bold transition-colors ${
-          danger
-            ? "border-2 border-red-700 text-red-800 hover:bg-red-700 hover:text-white"
-            : "border-2 border-petrol/25 text-petrol hover:border-petrol"
-        }`}
+        aria-haspopup="dialog"
+        aria-controls={id}
+        className={`admin-action ${danger ? "admin-action--danger" : ""}`}
       >
         {label}
       </button>
       <dialog
+        id={id}
         ref={dialogRef}
-        aria-labelledby={`${confirmTitle}-baslik`}
-        className="w-[min(92vw,28rem)] rounded-2xl border border-petrol/20 bg-paper p-6 text-graphite shadow-xl backdrop:bg-petrol/50"
+        aria-labelledby={`${id}-baslik`}
+        className="dialog"
       >
-        <h2 id={`${confirmTitle}-baslik`} className="font-display text-3xl font-semibold text-petrol">
+        <h2 id={`${id}-baslik`} className="dialog__title">
           {confirmTitle}
         </h2>
-        <p className="mt-2 leading-relaxed">{confirmText}</p>
-        <div className="mt-6 flex flex-col gap-2 sm:flex-row">
+        <p className="dialog__text">{confirmText}</p>
+        <div className="dialog__actions">
           <button
             type="button"
+            disabled={pending}
             onClick={() => {
               dialogRef.current?.close();
-              action();
+              startTransition(() => action());
             }}
-            className={`flex-1 rounded-full px-5 py-3 font-bold text-petrol ${
-              danger ? "bg-red-700 text-white hover:bg-red-800" : "bg-lime hover:bg-lime-deep"
-            }`}
+            className={`button ${danger ? "button--danger" : "button--primary"}`}
           >
-            Onayla
+            {pending ? "Onaylanıyor…" : "Onayla"}
           </button>
           <button
             type="button"
             onClick={() => dialogRef.current?.close()}
-            className="flex-1 rounded-full border-2 border-petrol/25 px-5 py-3 font-bold text-petrol hover:border-petrol"
+            className="button button--secondary"
           >
             Vazgeç
           </button>
