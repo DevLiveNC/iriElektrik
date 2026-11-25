@@ -4,7 +4,7 @@ import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { getDb } from "./db";
 import { businessSettings, jobs, redirects } from "./db/schema";
-import type { Business, Job, JobStatus } from "./types";
+import type { Business, BusinessHours, Job, JobStatus, Service } from "./types";
 import seed from "@/data/seed.json";
 
 interface StoreData {
@@ -15,11 +15,148 @@ interface StoreData {
 
 const STORE_PATH = join(process.cwd(), "data", "store.json");
 
+function asString(value: unknown): string {
+  return typeof value === "string" ? value : "";
+}
+
+function asBoolean(value: unknown): boolean {
+  return value === true;
+}
+
+function asCoordinate(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function normalizeHours(value: unknown): BusinessHours[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => {
+    const row = (item ?? {}) as Partial<BusinessHours>;
+    return {
+      day: asString(row.day),
+      open: asString(row.open),
+      close: asString(row.close),
+    };
+  });
+}
+
+function normalizeServices(value: unknown): Service[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((item, index) => {
+    const row = (item ?? {}) as Partial<Service>;
+    return {
+      id: asString(row.id) || `hizmet-${index + 1}`,
+      title: asString(row.title),
+      symptom: asString(row.symptom),
+      service: asString(row.service),
+      approved: asBoolean(row.approved),
+    };
+  });
+}
+
+export function normalizeBusiness(value: Partial<Business> | null | undefined): Business {
+  const raw = (value ?? {}) as Partial<Business>;
+  return {
+    name: asString(raw.name) || "İri Oto Elektrik",
+    district: asString(raw.district),
+    city: asString(raw.city),
+    address: asString(raw.address),
+    phone: asString(raw.phone),
+    phoneHref: asString(raw.phoneHref),
+    whatsapp: asString(raw.whatsapp),
+    email: asString(raw.email),
+    lat: asCoordinate(raw.lat),
+    lng: asCoordinate(raw.lng),
+    mapsUrl: asString(raw.mapsUrl),
+    hours: normalizeHours(raw.hours),
+    profileUrl: asString(raw.profileUrl),
+    verified: asBoolean(raw.verified),
+    heroTitle: asString(raw.heroTitle) || "Aracın elektriğini çözüyoruz.",
+    heroSubtitle:
+      asString(raw.heroSubtitle) ||
+      "Akü, şarj, marş, aydınlatma ve tesisat arızalarında ölçüm ve arıza tespiti.",
+    heroImage: asString(raw.heroImage),
+    heroImageAlt: asString(raw.heroImageAlt),
+    heroPhotoApproved: asBoolean(raw.heroPhotoApproved),
+    services: normalizeServices(raw.services),
+  };
+}
+
+const DEFAULT_BUSINESS = normalizeBusiness(seed.business as Partial<Business>);
+
+function normalizeJob(value: Partial<Job> | null | undefined): Job {
+  const raw = (value ?? {}) as Partial<Job>;
+  const now = new Date().toISOString();
+  return {
+    id: asString(raw.id) || `job-${Math.random().toString(36).slice(2, 10)}`,
+    title: asString(raw.title),
+    slug: asString(raw.slug),
+    category: asString(raw.category),
+    vehicle: asString(raw.vehicle),
+    symptom: asString(raw.symptom),
+    diagnosis: asString(raw.diagnosis),
+    application: asString(raw.application),
+    result: asString(raw.result),
+    cover: asString(raw.cover),
+    gallery: Array.isArray(raw.gallery) ? raw.gallery.filter((v): v is string => typeof v === "string") : [],
+    alt: asString(raw.alt),
+    status: (["draft", "published", "archived"] as const).includes(raw.status as JobStatus)
+      ? (raw.status as JobStatus)
+      : "draft",
+    featured: asBoolean(raw.featured),
+    sortOrder: typeof raw.sortOrder === "number" && Number.isFinite(raw.sortOrder) ? raw.sortOrder : 0,
+    publishedAt: typeof raw.publishedAt === "string" ? raw.publishedAt : null,
+    createdAt: typeof raw.createdAt === "string" ? raw.createdAt : now,
+    updatedAt: typeof raw.updatedAt === "string" ? raw.updatedAt : now,
+    isExample: asBoolean(raw.isExample),
+  };
+}
+
+function isExampleRecord(job: Job): boolean {
+  return (
+    job.isExample === true ||
+    job.id.startsWith("ornek-") ||
+    /(^|-)ornek(-|$)/i.test(job.slug) ||
+    /örnek kayıt/i.test(job.title)
+  );
+}
+
+export function isPublishableJob(job: Job): boolean {
+  const narrative = [job.symptom, job.diagnosis, job.application, job.result];
+  return (
+    job.status === "published" &&
+    !isExampleRecord(job) &&
+    Boolean(job.cover.trim()) &&
+    Boolean(job.alt.trim()) &&
+    narrative.every((value) => value.trim().length >= 10)
+  );
+}
+
 function readFileStore(): StoreData {
   if (!existsSync(STORE_PATH)) {
-    return structuredClone(seed) as unknown as StoreData;
+    return {
+      business: structuredClone(DEFAULT_BUSINESS),
+      jobs: [],
+      redirects: {},
+    };
   }
-  return JSON.parse(readFileSync(STORE_PATH, "utf-8")) as StoreData;
+  const raw = JSON.parse(readFileSync(STORE_PATH, "utf-8")) as {
+    business?: Partial<Business>;
+    jobs?: Partial<Job>[];
+    redirects?: Record<string, string> | unknown[];
+  };
+  const redirectsValue = raw.redirects;
+  return {
+    business: normalizeBusiness(raw.business),
+    jobs: Array.isArray(raw.jobs) ? raw.jobs.map(normalizeJob) : [],
+    redirects:
+      redirectsValue && !Array.isArray(redirectsValue)
+        ? Object.fromEntries(
+            Object.entries(redirectsValue).filter(
+              (entry): entry is [string, string] => typeof entry[1] === "string",
+            ),
+          )
+        : {},
+  };
 }
 
 function writeFileStore(data: StoreData) {
@@ -58,18 +195,21 @@ export const getBusiness = cache(async (): Promise<Business> => {
   const db = getDb();
   if (db) {
     const rows = await db.select().from(businessSettings).limit(1);
-    if (rows[0]) return rows[0].data as Business;
-    return (seed as unknown as StoreData).business;
+    if (rows[0]) return normalizeBusiness(rows[0].data as Partial<Business>);
+    return structuredClone(DEFAULT_BUSINESS);
   }
   return readFileStore().business;
 });
 
 export const listJobs = cache(
-  async (opts: {
-    status?: JobStatus;
-    featured?: boolean;
-    category?: string;
-  } = {}): Promise<Job[]> => {
+  async (
+    opts: {
+      status?: JobStatus;
+      featured?: boolean;
+      category?: string;
+      includeExamples?: boolean;
+    } = {},
+  ): Promise<Job[]> => {
     const db = getDb();
     let all: Job[];
     if (db) {
@@ -79,10 +219,19 @@ export const listJobs = cache(
       all = readFileStore().jobs;
     }
     return all
-      .filter((j) => (opts.status ? j.status === opts.status : true))
-      .filter((j) => (opts.featured !== undefined ? j.featured === opts.featured : true))
-      .filter((j) => (opts.category ? j.category === opts.category : true))
+      .filter((job) => opts.includeExamples || !isExampleRecord(job))
+      .filter((job) => (opts.status ? job.status === opts.status : true))
+      .filter((job) => (opts.featured !== undefined ? job.featured === opts.featured : true))
+      .filter((job) => (opts.category ? job.category === opts.category : true))
       .sort((a, b) => a.sortOrder - b.sortOrder || b.createdAt.localeCompare(a.createdAt));
+  },
+);
+
+/** Public sayfalar ve sitemap için tek kaynak: yalnızca gerçek, eksiksiz, yayımlanmış işler. */
+export const listPublishedJobs = cache(
+  async (opts: { featured?: boolean; category?: string } = {}): Promise<Job[]> => {
+    const published = await listJobs({ ...opts, status: "published" });
+    return published.filter(isPublishableJob);
   },
 );
 
@@ -92,7 +241,13 @@ export const getJobBySlug = cache(async (slug: string): Promise<Job | null> => {
     const rows = await db.select().from(jobs).where(eq(jobs.slug, slug)).limit(1);
     return rows[0] ? toJob(rows[0]) : null;
   }
-  return readFileStore().jobs.find((j) => j.slug === slug) ?? null;
+  const job = readFileStore().jobs.find((item) => item.slug === slug);
+  return job ? normalizeJob(job) : null;
+});
+
+export const getPublishedJobBySlug = cache(async (slug: string): Promise<Job | null> => {
+  const job = await getJobBySlug(slug);
+  return job && isPublishableJob(job) ? job : null;
 });
 
 export const getJobById = cache(async (id: string): Promise<Job | null> => {
@@ -101,7 +256,8 @@ export const getJobById = cache(async (id: string): Promise<Job | null> => {
     const rows = await db.select().from(jobs).where(eq(jobs.id, id)).limit(1);
     return rows[0] ? toJob(rows[0]) : null;
   }
-  return readFileStore().jobs.find((j) => j.id === id) ?? null;
+  const job = readFileStore().jobs.find((item) => item.id === id);
+  return job ? normalizeJob(job) : null;
 });
 
 export const getRedirect = cache(async (slug: string): Promise<string | null> => {
@@ -120,6 +276,7 @@ export async function createJob(input: Omit<Job, "id" | "createdAt" | "updatedAt
     id: `job-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
     createdAt: now,
     updatedAt: now,
+    isExample: false,
   };
   const db = getDb();
   if (db) {
@@ -161,10 +318,10 @@ export async function updateJob(id: string, patch: Partial<Job>): Promise<Job | 
     return next;
   }
   const data = readFileStore();
-  const idx = data.jobs.findIndex((j) => j.id === id);
+  const idx = data.jobs.findIndex((job) => job.id === id);
   if (idx === -1) return null;
   const existing = data.jobs[idx];
-  const next: Job = { ...existing, ...patch, updatedAt: new Date().toISOString() };
+  const next: Job = { ...existing, ...patch, updatedAt: new Date().toISOString(), isExample: false };
   data.jobs[idx] = next;
   if (patch.slug && patch.slug !== existing.slug) {
     data.redirects[existing.slug] = patch.slug;
@@ -181,24 +338,25 @@ export async function deleteJob(id: string): Promise<boolean> {
   }
   const data = readFileStore();
   const before = data.jobs.length;
-  data.jobs = data.jobs.filter((j) => j.id !== id);
+  data.jobs = data.jobs.filter((job) => job.id !== id);
   writeFileStore(data);
   return data.jobs.length < before;
 }
 
 export async function updateBusiness(next: Business): Promise<Business> {
+  const clean = normalizeBusiness(next);
   const db = getDb();
   if (db) {
     await db
       .insert(businessSettings)
-      .values({ id: 1, data: next })
-      .onConflictDoUpdate({ target: businessSettings.id, set: { data: next } });
-    return next;
+      .values({ id: 1, data: clean })
+      .onConflictDoUpdate({ target: businessSettings.id, set: { data: clean } });
+    return clean;
   }
   const data = readFileStore();
-  data.business = next;
+  data.business = clean;
   writeFileStore(data);
-  return next;
+  return clean;
 }
 
 export function isDbConfigured() {

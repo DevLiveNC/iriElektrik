@@ -1,22 +1,12 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import type { Business } from "@/lib/types";
+import { isPrivateMediaSrc } from "@/lib/media";
 import { saveBusinessAction, type ActionState } from "@/app/admin/actions";
 
 const initialState: ActionState = { ok: false, errors: {} };
-const inputCls =
-  "w-full rounded-lg border border-petrol/30 bg-white px-4 py-3 text-graphite placeholder:text-graphite/40";
-const labelCls = "mb-1 block font-semibold text-petrol";
-
-function FieldError({ message }: { message?: string }) {
-  if (!message) return null;
-  return (
-    <p role="alert" className="mt-1 text-sm font-semibold text-red-800">
-      {message}
-    </p>
-  );
-}
 
 interface ServiceRow {
   id: string;
@@ -32,257 +22,593 @@ interface HoursRow {
   close: string;
 }
 
+function FieldError({ id, message }: { id: string; message?: string }) {
+  if (!message) return null;
+  return (
+    <p id={id} role="alert" className="field-error">
+      {message}
+    </p>
+  );
+}
+
+async function uploadFile(file: File): Promise<string> {
+  const form = new FormData();
+  form.append("file", file);
+  const response = await fetch("/api/upload", { method: "POST", body: form });
+  const data = (await response.json().catch(() => null)) as { url?: string; error?: string } | null;
+  if (!response.ok || !data?.url) throw new Error(data?.error ?? "Yükleme başarısız.");
+  return data.url;
+}
+
 export default function SettingsForm({ business }: { business: Business }) {
   const [state, formAction, pending] = useActionState(saveBusinessAction, initialState);
   const [services, setServices] = useState<ServiceRow[]>(business.services);
   const [hours, setHours] = useState<HoursRow[]>(business.hours);
+  const [heroImage, setHeroImage] = useState(business.heroImage);
+  const [heroImageAlt, setHeroImageAlt] = useState(business.heroImageAlt);
+  const [heroPhotoApproved, setHeroPhotoApproved] = useState(business.heroPhotoApproved);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [dirty, setDirty] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
-  const updateService = (i: number, patch: Partial<ServiceRow>) =>
-    setServices((s) => s.map((row, idx) => (idx === i ? { ...row, ...patch } : row)));
-  const updateHours = (i: number, patch: Partial<HoursRow>) =>
-    setHours((s) => s.map((row, idx) => (idx === i ? { ...row, ...patch } : row)));
+  const busy = pending || uploading;
+  const errorKeys = Object.keys(state.errors);
+
+  useEffect(() => {
+    if (errorKeys.length === 0) return;
+    setDirty(true);
+    const selectorMap: Record<string, string> = {
+      heroImage: "heroPhotoFile",
+      services: "service-title-0",
+      hours: "hour-day-0",
+    };
+    const selectorName = selectorMap[errorKeys[0]] ?? errorKeys[0];
+    const field = formRef.current?.querySelector<HTMLElement>(
+      `[name="${CSS.escape(selectorName)}"]`,
+    );
+    field?.focus();
+  }, [state.errors]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
+
+  const updateService = (index: number, patch: Partial<ServiceRow>) =>
+    setServices((rows) =>
+      rows.map((row, rowIndex) => (rowIndex === index ? { ...row, ...patch } : row)),
+    );
+
+  const updateHours = (index: number, patch: Partial<HoursRow>) =>
+    setHours((rows) =>
+      rows.map((row, rowIndex) => (rowIndex === index ? { ...row, ...patch } : row)),
+    );
+
+  const onHeroPhoto = async (file: File | undefined) => {
+    if (!file) return;
+    setUploading(true);
+    setUploadError(null);
+    try {
+      setHeroImage(await uploadFile(file));
+      setDirty(true);
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : "Yükleme başarısız.");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   return (
-    <form action={formAction} className="space-y-6">
+    <form
+      ref={formRef}
+      action={formAction}
+      className="admin-form"
+      onChange={() => setDirty(true)}
+      onSubmit={() => setDirty(false)}
+    >
       <input type="hidden" name="servicesJson" value={JSON.stringify(services)} />
       <input type="hidden" name="hoursJson" value={JSON.stringify(hours)} />
+      <input type="hidden" name="heroImage" value={heroImage} />
 
-      <fieldset className="space-y-4 rounded-xl border border-petrol/20 p-4">
-        <legend className="px-2 font-display text-2xl font-semibold text-petrol">İşletme</legend>
-        <div>
-          <label htmlFor="name" className={labelCls}>
+      <fieldset className="admin-fieldset">
+        <legend className="admin-fieldset__title">İşletme bilgileri</legend>
+        <p className="admin-fieldset__intro">
+          “Bilgiler doğrulandı” işaretlenmeden adres, telefon, bölge ve saatler üretimde görünmez.
+        </p>
+        <div className="field">
+          <label htmlFor="name" className="field-label">
             İşletme adı
           </label>
-          <input id="name" name="name" type="text" required defaultValue={business.name} className={inputCls} />
-          <FieldError message={state.errors.name} />
+          <input
+            id="name"
+            name="name"
+            type="text"
+            required
+            autoComplete="organization"
+            defaultValue={business.name}
+            aria-invalid={Boolean(state.errors.name)}
+            className="field-input"
+          />
+          <FieldError id="name-error" message={state.errors.name} />
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label htmlFor="district" className={labelCls}>
+        <div className="field-grid">
+          <div className="field">
+            <label htmlFor="district" className="field-label">
               İlçe / Mahalle
             </label>
-            <input id="district" name="district" type="text" defaultValue={business.district} className={inputCls} />
+            <input
+              id="district"
+              name="district"
+              type="text"
+              autoComplete="off"
+              defaultValue={business.district}
+              className="field-input"
+            />
           </div>
-          <div>
-            <label htmlFor="city" className={labelCls}>
+          <div className="field">
+            <label htmlFor="city" className="field-label">
               Şehir
             </label>
-            <input id="city" name="city" type="text" defaultValue={business.city} className={inputCls} />
+            <input
+              id="city"
+              name="city"
+              type="text"
+              autoComplete="address-level2"
+              defaultValue={business.city}
+              className="field-input"
+            />
           </div>
         </div>
-        <div>
-          <label htmlFor="address" className={labelCls}>
+        <div className="field">
+          <label htmlFor="address" className="field-label">
             Adres
           </label>
-          <input id="address" name="address" type="text" defaultValue={business.address} className={inputCls} />
+          <input
+            id="address"
+            name="address"
+            type="text"
+            autoComplete="street-address"
+            defaultValue={business.address}
+            className="field-input"
+          />
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label htmlFor="phone" className={labelCls}>
+        <div className="field-grid">
+          <div className="field">
+            <label htmlFor="phone" className="field-label">
               Telefon (görünen)
             </label>
-            <input id="phone" name="phone" type="tel" autoComplete="tel" defaultValue={business.phone} className={inputCls} placeholder="0 (5__) ___ __ __…" />
+            <input
+              id="phone"
+              name="phone"
+              type="tel"
+              autoComplete="tel"
+              defaultValue={business.phone}
+              className="field-input"
+              placeholder="0 (5__) ___ __ __…"
+            />
           </div>
-          <div>
-            <label htmlFor="phoneHref" className={labelCls}>
-              Telefon bağlantısı (tel:)
+          <div className="field">
+            <label htmlFor="phoneHref" className="field-label">
+              Telefon bağlantısı
             </label>
-            <input id="phoneHref" name="phoneHref" type="text" defaultValue={business.phoneHref} className={inputCls} placeholder="tel:+90…" />
+            <input
+              id="phoneHref"
+              name="phoneHref"
+              type="text"
+              inputMode="tel"
+              autoComplete="off"
+              spellCheck={false}
+              defaultValue={business.phoneHref}
+              aria-invalid={Boolean(state.errors.phoneHref)}
+              className="field-input"
+              placeholder="tel:+90…"
+            />
+            <FieldError id="phoneHref-error" message={state.errors.phoneHref} />
           </div>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label htmlFor="whatsapp" className={labelCls}>
+        <div className="field-grid">
+          <div className="field">
+            <label htmlFor="whatsapp" className="field-label">
               WhatsApp bağlantısı (varsa)
             </label>
-            <input id="whatsapp" name="whatsapp" type="url" defaultValue={business.whatsapp} className={inputCls} placeholder="https://wa.me/…" />
+            <input
+              id="whatsapp"
+              name="whatsapp"
+              type="url"
+              autoComplete="off"
+              spellCheck={false}
+              defaultValue={business.whatsapp}
+              className="field-input"
+              placeholder="https://wa.me/…"
+            />
           </div>
-          <div>
-            <label htmlFor="email" className={labelCls}>
+          <div className="field">
+            <label htmlFor="email" className="field-label">
               E-posta
             </label>
-            <input id="email" name="email" type="email" autoComplete="email" spellCheck={false} defaultValue={business.email} className={inputCls} />
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              spellCheck={false}
+              defaultValue={business.email}
+              className="field-input"
+            />
           </div>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label htmlFor="lat" className={labelCls}>
-              Enlem (koordinat)
+        <div className="field-grid">
+          <div className="field">
+            <label htmlFor="lat" className="field-label">
+              Enlem
             </label>
-            <input id="lat" name="lat" type="number" inputMode="decimal" step="any" defaultValue={business.lat ?? ""} className={inputCls} placeholder="36.8…" />
+            <input
+              id="lat"
+              name="lat"
+              type="number"
+              inputMode="decimal"
+              step="any"
+              autoComplete="off"
+              defaultValue={business.lat ?? ""}
+              className="field-input"
+              placeholder="36.8…"
+            />
           </div>
-          <div>
-            <label htmlFor="lng" className={labelCls}>
-              Boylam (koordinat)
+          <div className="field">
+            <label htmlFor="lng" className="field-label">
+              Boylam
             </label>
-            <input id="lng" name="lng" type="number" inputMode="decimal" step="any" defaultValue={business.lng ?? ""} className={inputCls} placeholder="34.6…" />
+            <input
+              id="lng"
+              name="lng"
+              type="number"
+              inputMode="decimal"
+              step="any"
+              autoComplete="off"
+              defaultValue={business.lng ?? ""}
+              className="field-input"
+              placeholder="34.6…"
+            />
           </div>
         </div>
-        <div>
-          <label htmlFor="mapsUrl" className={labelCls}>
-            Harita bağlantısı (yoksa koordinattan üretilir)
-          </label>
-          <input id="mapsUrl" name="mapsUrl" type="url" defaultValue={business.mapsUrl} className={inputCls} placeholder="https://www.google.com/maps/…" />
+        <div className="field-grid">
+          <div className="field">
+            <label htmlFor="mapsUrl" className="field-label">
+              Doğrulanmış yol tarifi URL’si
+            </label>
+            <input
+              id="mapsUrl"
+              name="mapsUrl"
+              type="url"
+              autoComplete="off"
+              spellCheck={false}
+              defaultValue={business.mapsUrl}
+              className="field-input"
+              placeholder="https://www.google.com/maps/dir/?api=1&destination=…"
+            />
+            <p className="field-hint">
+              Koordinat varsa doğrudan yol tarifi onlardan üretilir.
+            </p>
+            <FieldError id="mapsUrl-error" message={state.errors.mapsUrl} />
+          </div>
+          <div className="field">
+            <label htmlFor="profileUrl" className="field-label">
+              Google İşletme Profili
+            </label>
+            <input
+              id="profileUrl"
+              name="profileUrl"
+              type="url"
+              autoComplete="off"
+              spellCheck={false}
+              defaultValue={business.profileUrl}
+              className="field-input"
+              placeholder="https://g.page/…"
+            />
+          </div>
         </div>
-        <div>
-          <label htmlFor="profileUrl" className={labelCls}>
-            Google İşletme Profili bağlantısı
-          </label>
-          <input id="profileUrl" name="profileUrl" type="url" defaultValue={business.profileUrl} className={inputCls} placeholder="https://g.page/…" />
-        </div>
-        <label htmlFor="verified" className="flex items-center gap-2 font-semibold text-petrol">
-          <input id="verified" name="verified" type="checkbox" defaultChecked={business.verified} className="h-5 w-5 accent-[#102A2A]" />
-          Bilgiler doğrulandı (üretimde yalnızca doğrulanmış bilgi gösterilir)
+        <label htmlFor="verified" className="checkbox-field">
+          <input id="verified" name="verified" type="checkbox" defaultChecked={business.verified} />
+          Bilgiler doğrulandı
         </label>
       </fieldset>
 
-      <fieldset className="space-y-4 rounded-xl border border-petrol/20 p-4">
-        <legend className="px-2 font-display text-2xl font-semibold text-petrol">Hero metni</legend>
-        <div>
-          <label htmlFor="heroTitle" className={labelCls}>
+      <fieldset className="admin-fieldset">
+        <legend className="admin-fieldset__title">Hero metni</legend>
+        <div className="field">
+          <label htmlFor="heroTitle" className="field-label">
             Başlık
           </label>
-          <input id="heroTitle" name="heroTitle" type="text" required defaultValue={business.heroTitle} className={inputCls} />
-          <FieldError message={state.errors.heroTitle} />
+          <input
+            id="heroTitle"
+            name="heroTitle"
+            type="text"
+            required
+            autoComplete="off"
+            defaultValue={business.heroTitle}
+            aria-invalid={Boolean(state.errors.heroTitle)}
+            className="field-input"
+          />
+          <FieldError id="heroTitle-error" message={state.errors.heroTitle} />
         </div>
-        <div>
-          <label htmlFor="heroSubtitle" className={labelCls}>
+        <div className="field">
+          <label htmlFor="heroSubtitle" className="field-label">
             Açıklama
           </label>
-          <textarea id="heroSubtitle" name="heroSubtitle" rows={3} required defaultValue={business.heroSubtitle} className={inputCls} />
-          <FieldError message={state.errors.heroSubtitle} />
+          <textarea
+            id="heroSubtitle"
+            name="heroSubtitle"
+            rows={3}
+            required
+            autoComplete="off"
+            defaultValue={business.heroSubtitle}
+            aria-invalid={Boolean(state.errors.heroSubtitle)}
+            className="field-textarea"
+          />
+          <FieldError id="heroSubtitle-error" message={state.errors.heroSubtitle} />
         </div>
       </fieldset>
 
-      <fieldset className="space-y-4 rounded-xl border border-petrol/20 p-4">
-        <legend className="px-2 font-display text-2xl font-semibold text-petrol">Çalışma saatleri</legend>
-        {hours.length === 0 && (
-          <p className="text-sm text-graphite/70">
-            Saat girilmezse sitede açık/kapalı etiketi gösterilmez.
-          </p>
-        )}
-        {hours.map((h, i) => (
-          <div key={i} className="grid gap-2 sm:grid-cols-4">
-            <input
-              aria-label="Gün"
-              type="text"
-              value={h.day}
-              onChange={(e) => updateHours(i, { day: e.target.value })}
-              className={inputCls}
-              placeholder="Pazartesi"
+      <fieldset className="admin-fieldset">
+        <legend className="admin-fieldset__title">Onaylı atölye fotoğrafı</legend>
+        <p className="admin-fieldset__intro">
+          Temsili tasarım görseli üretimde kullanılamaz. Yalnızca müşteri izni alınmış gerçek
+          fotoğrafı yükleyip onaylayın.
+        </p>
+        {heroImage && (
+          <div className="image-preview">
+            <Image
+              src={heroImage}
+              alt={heroImageAlt || "Atölye fotoğrafı önizleme"}
+              fill
+              sizes="320px"
+              unoptimized={isPrivateMediaSrc(heroImage)}
             />
-            <input
-              aria-label="Açılış"
-              type="text"
-              value={h.open}
-              onChange={(e) => updateHours(i, { open: e.target.value })}
-              className={inputCls}
-              placeholder="09:00"
-            />
-            <input
-              aria-label="Kapanış"
-              type="text"
-              value={h.close}
-              onChange={(e) => updateHours(i, { close: e.target.value })}
-              className={inputCls}
-              placeholder="18:00"
-            />
-            <button
-              type="button"
-              onClick={() => setHours((s) => s.filter((_, idx) => idx !== i))}
-              className="rounded-lg border-2 border-petrol/25 px-4 font-bold text-petrol hover:border-petrol"
-            >
-              Kaldır
-            </button>
           </div>
-        ))}
-        <button
-          type="button"
-          onClick={() => setHours((s) => [...s, { day: "", open: "", close: "" }])}
-          className="rounded-full border-2 border-petrol px-5 py-2 font-bold text-petrol hover:bg-petrol hover:text-paper"
-        >
-          Saat ekle
-        </button>
+        )}
+        <div className="field">
+          <label htmlFor="hero-photo-file" className="field-label">
+            Fotoğraf yükle (JPEG/PNG/WebP, en fazla 8 MB)
+          </label>
+          <input
+            id="hero-photo-file"
+            name="heroPhotoFile"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            autoComplete="off"
+            onChange={(event) => void onHeroPhoto(event.target.files?.[0])}
+            disabled={uploading}
+            className="field-input"
+          />
+          <FieldError id="heroImage-error" message={state.errors.heroImage} />
+        </div>
+        <div className="field">
+          <label htmlFor="heroImageAlt" className="field-label">
+            Fotoğraf alt metni
+          </label>
+          <input
+            id="heroImageAlt"
+            name="heroImageAlt"
+            type="text"
+            autoComplete="off"
+            value={heroImageAlt}
+            onChange={(event) => setHeroImageAlt(event.target.value)}
+            aria-invalid={Boolean(state.errors.heroImageAlt)}
+            className="field-input"
+            placeholder="Açık kaput altında akü ölçümü…"
+          />
+          <FieldError id="heroImageAlt-error" message={state.errors.heroImageAlt} />
+        </div>
+        <label htmlFor="heroPhotoApproved" className="checkbox-field">
+          <input
+            id="heroPhotoApproved"
+            name="heroPhotoApproved"
+            type="checkbox"
+            checked={heroPhotoApproved}
+            onChange={(event) => setHeroPhotoApproved(event.target.checked)}
+          />
+          Fotoğraf onaylandı ve üretimde gösterilebilir
+        </label>
       </fieldset>
 
-      <fieldset className="space-y-4 rounded-xl border border-petrol/20 p-4">
-        <legend className="px-2 font-display text-2xl font-semibold text-petrol">Hizmetler</legend>
-        <p className="text-sm text-graphite/70">
-          Yalnızca “onaylı” işaretli hizmetler üretimde yayımlanır.
+      <fieldset className="admin-fieldset">
+        <legend className="admin-fieldset__title">Çalışma saatleri</legend>
+        <p className="admin-fieldset__intro">
+          Boş bırakılırsa sitede saat listesi veya açık/kapalı etiketi gösterilmez.
         </p>
-        {services.map((s, i) => (
-          <div key={s.id} className="space-y-2 rounded-lg border border-petrol/15 p-3">
-            <input
-              aria-label="Hizmet başlığı"
-              type="text"
-              value={s.title}
-              onChange={(e) => updateService(i, { title: e.target.value })}
-              className={inputCls}
-              placeholder="Hizmet başlığı"
-            />
-            <textarea
-              aria-label="Belirti"
-              rows={2}
-              value={s.symptom}
-              onChange={(e) => updateService(i, { symptom: e.target.value })}
-              className={inputCls}
-              placeholder="Müşterinin yaşadığı belirti…"
-            />
-            <textarea
-              aria-label="Sunulan hizmet"
-              rows={2}
-              value={s.service}
-              onChange={(e) => updateService(i, { service: e.target.value })}
-              className={inputCls}
-              placeholder="İşletmenin sunduğu hizmet…"
-            />
-            <div className="flex items-center justify-between gap-3">
-              <label className="flex items-center gap-2 font-semibold text-petrol">
+        {hours.map((hour, index) => (
+          <div key={index} className="hours-editor">
+            <div className="hours-editor__row">
+              <div className="field">
+                <label className="sr-only" htmlFor={`hour-day-${index}`}>
+                  Gün
+                </label>
                 <input
-                  type="checkbox"
-                  checked={s.approved}
-                  onChange={(e) => updateService(i, { approved: e.target.checked })}
-                  className="h-5 w-5 accent-[#102A2A]"
+                  id={`hour-day-${index}`}
+                  name={`hour-day-${index}`}
+                  type="text"
+                  autoComplete="off"
+                  value={hour.day}
+                  onChange={(event) => updateHours(index, { day: event.target.value })}
+                  className="field-input"
+                  placeholder="Pazartesi…"
                 />
-                Onaylı
-              </label>
+              </div>
+              <div className="field">
+                <label className="sr-only" htmlFor={`hour-open-${index}`}>
+                  Açılış
+                </label>
+                <input
+                  id={`hour-open-${index}`}
+                  name={`hour-open-${index}`}
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  value={hour.open}
+                  onChange={(event) => updateHours(index, { open: event.target.value })}
+                  className="field-input"
+                  placeholder="09:00…"
+                />
+              </div>
+              <div className="field">
+                <label className="sr-only" htmlFor={`hour-close-${index}`}>
+                  Kapanış
+                </label>
+                <input
+                  id={`hour-close-${index}`}
+                  name={`hour-close-${index}`}
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  value={hour.close}
+                  onChange={(event) => updateHours(index, { close: event.target.value })}
+                  className="field-input"
+                  placeholder="18:00…"
+                />
+              </div>
               <button
                 type="button"
-                onClick={() => setServices((arr) => arr.filter((_, idx) => idx !== i))}
-                className="rounded-lg border-2 border-petrol/25 px-4 py-1.5 text-sm font-bold text-petrol hover:border-petrol"
+                onClick={() => setHours((rows) => rows.filter((_, rowIndex) => rowIndex !== index))}
+                className="admin-action"
               >
                 Kaldır
               </button>
             </div>
           </div>
         ))}
+        <FieldError id="hours-error" message={state.errors.hours} />
+        <button
+          type="button"
+          onClick={() => setHours((rows) => [...rows, { day: "", open: "", close: "" }])}
+          className="button button--secondary button--small"
+        >
+          Saat ekle
+        </button>
+      </fieldset>
+
+      <fieldset className="admin-fieldset">
+        <legend className="admin-fieldset__title">Hizmetler</legend>
+        <p className="admin-fieldset__intro">
+          Yalnızca onaylı işaretli hizmetler public listede ve menüde görünür.
+        </p>
+        {services.map((service, index) => (
+          <div key={service.id} className="service-editor">
+            <div className="service-editor__row">
+              <div className="field">
+                <label className="sr-only" htmlFor={`service-title-${index}`}>
+                  Hizmet başlığı
+                </label>
+                <input
+                  id={`service-title-${index}`}
+                  name={`service-title-${index}`}
+                  type="text"
+                  autoComplete="off"
+                  value={service.title}
+                  onChange={(event) => updateService(index, { title: event.target.value })}
+                  className="field-input"
+                  placeholder="Hizmet başlığı…"
+                />
+              </div>
+              <div className="field">
+                <label className="sr-only" htmlFor={`service-symptom-${index}`}>
+                  Belirti
+                </label>
+                <textarea
+                  id={`service-symptom-${index}`}
+                  name={`service-symptom-${index}`}
+                  rows={2}
+                  autoComplete="off"
+                  value={service.symptom}
+                  onChange={(event) => updateService(index, { symptom: event.target.value })}
+                  className="field-textarea"
+                  placeholder="Müşterinin yaşadığı belirti…"
+                />
+              </div>
+              <div className="field">
+                <label className="sr-only" htmlFor={`service-work-${index}`}>
+                  Sunulan hizmet
+                </label>
+                <textarea
+                  id={`service-work-${index}`}
+                  name={`service-work-${index}`}
+                  rows={2}
+                  autoComplete="off"
+                  value={service.service}
+                  onChange={(event) => updateService(index, { service: event.target.value })}
+                  className="field-textarea"
+                  placeholder="İşletmenin sunduğu hizmet…"
+                />
+              </div>
+              <div className="service-editor__footer">
+                <label className="checkbox-field" htmlFor={`service-approved-${index}`}>
+                  <input
+                    id={`service-approved-${index}`}
+                    name={`service-approved-${index}`}
+                    type="checkbox"
+                    checked={service.approved}
+                    onChange={(event) => updateService(index, { approved: event.target.checked })}
+                  />
+                  Onaylı
+                </label>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setServices((rows) => rows.filter((_, rowIndex) => rowIndex !== index))
+                  }
+                  className="admin-action"
+                >
+                  Kaldır
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+        <FieldError id="services-error" message={state.errors.services} />
         <button
           type="button"
           onClick={() =>
-            setServices((arr) => [
-              ...arr,
-              { id: `hizmet-${Date.now().toString(36)}`, title: "", symptom: "", service: "", approved: false },
+            setServices((rows) => [
+              ...rows,
+              {
+                id: `hizmet-${Date.now().toString(36)}`,
+                title: "",
+                symptom: "",
+                service: "",
+                approved: false,
+              },
             ])
           }
-          className="rounded-full border-2 border-petrol px-5 py-2 font-bold text-petrol hover:bg-petrol hover:text-paper"
+          className="button button--secondary button--small"
         >
           Hizmet ekle
         </button>
       </fieldset>
 
+      {uploadError && (
+        <p role="alert" aria-live="polite" className="form-error">
+          {uploadError}
+        </p>
+      )}
       {state.errors.form && (
-        <p role="alert" className="rounded-lg border border-red-700/40 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">
+        <p role="alert" aria-live="polite" className="form-error">
           {state.errors.form}
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="w-full rounded-full bg-lime px-6 py-3.5 font-bold text-petrol transition-colors hover:bg-lime-deep disabled:opacity-60"
-      >
-        {pending ? "Kaydediliyor…" : "Kaydet"}
-      </button>
+      <div className="admin-form__actions">
+        <button type="submit" disabled={busy} className="button button--primary">
+          Ayarları kaydet
+        </button>
+      </div>
+      <p className="form-status" role="status" aria-live="polite">
+        {uploading ? "Fotoğraf yükleniyor…" : pending ? "Kaydediliyor…" : ""}
+      </p>
     </form>
   );
 }

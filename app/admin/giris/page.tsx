@@ -1,20 +1,25 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [notConfigured, setNotConfigured] = useState(false);
+  const errorRef = useRef<HTMLParagraphElement>(null);
 
-  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  useEffect(() => {
+    if (error) errorRef.current?.focus();
+  }, [error]);
+
+  const submit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setError(null);
     setPending(true);
-    const form = new FormData(e.currentTarget);
-    const res = await fetch("/api/auth/login", {
+    const form = new FormData(event.currentTarget);
+    const response = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -22,10 +27,10 @@ export default function LoginPage() {
         password: String(form.get("password") ?? ""),
       }),
     });
-    const data = (await res.json().catch(() => null)) as { error?: string } | null;
+    const data = (await response.json().catch(() => null)) as { error?: string } | null;
     setPending(false);
-    if (!res.ok) {
-      if (res.status === 503) setNotConfigured(true);
+    if (!response.ok) {
+      if (response.status === 503) setNotConfigured(true);
       setError(data?.error ?? "Giriş başarısız. Tekrar deneyin.");
       return;
     }
@@ -34,23 +39,23 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="mx-auto max-w-md py-10">
-      <h1 className="font-display text-5xl font-bold text-petrol">Yönetici girişi</h1>
-      <p className="mt-2 text-graphite/80">Kayıt ekranı yoktur; tek yönetici girişi kullanılır.</p>
+    <div className="login-shell">
+      <h1 className="login-title">Yönetici girişi</h1>
+      <p className="login-intro">Kayıt ekranı yoktur; tek yönetici girişi kullanılır.</p>
 
       {notConfigured && (
-        <div className="mt-6 rounded-xl border border-petrol/20 bg-paper-2 px-5 py-4 text-sm leading-relaxed">
-          <p className="font-bold text-petrol">Giriş henüz yapılandırılmadı.</p>
-          <p className="mt-1">
-            README’deki “Güvenli ilk yönetici kurulumu” adımlarını izleyip ortam değişkenlerini tanımlayın:
-            ADMIN_EMAIL, ADMIN_PASSWORD_HASH (veya yerel geliştirme için ADMIN_PASSWORD) ve AUTH_SECRET.
+        <div className="login-notice">
+          <p className="field-label">Giriş henüz yapılandırılmadı.</p>
+          <p>
+            README’deki ilk kurulum adımlarını izleyip ADMIN_EMAIL, ADMIN_PASSWORD_HASH ve
+            AUTH_SECRET ortam değişkenlerini tanımlayın.
           </p>
         </div>
       )}
 
-      <form onSubmit={submit} className="mt-6 space-y-4" noValidate={false}>
-        <div>
-          <label htmlFor="email" className="mb-1 block font-semibold text-petrol">
+      <form onSubmit={submit} className="admin-form">
+        <div className="field">
+          <label htmlFor="email" className="field-label">
             E-posta
           </label>
           <input
@@ -60,11 +65,11 @@ export default function LoginPage() {
             autoComplete="username"
             spellCheck={false}
             required
-            className="w-full rounded-lg border border-petrol/30 bg-white px-4 py-3 text-graphite"
+            className="field-input"
           />
         </div>
-        <div>
-          <label htmlFor="password" className="mb-1 block font-semibold text-petrol">
+        <div className="field">
+          <label htmlFor="password" className="field-label">
             Şifre
           </label>
           <input
@@ -73,21 +78,29 @@ export default function LoginPage() {
             type="password"
             autoComplete="current-password"
             required
-            className="w-full rounded-lg border border-petrol/30 bg-white px-4 py-3 text-graphite"
+            className="field-input"
           />
         </div>
         {error && (
-          <p role="alert" aria-live="polite" className="rounded-lg border border-red-700/40 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">
+          <p
+            ref={errorRef}
+            tabIndex={-1}
+            role="alert"
+            aria-live="polite"
+            className="form-error"
+          >
             {error}
           </p>
         )}
-        <button
-          type="submit"
-          disabled={pending}
-          className="w-full rounded-full bg-lime px-6 py-3.5 font-bold text-petrol transition-colors hover:bg-lime-deep disabled:opacity-60"
-        >
-          {pending ? "Giriş yapılıyor…" : "Giriş yap"}
-        </button>
+        <div className="admin-form__actions">
+          <button
+            type="submit"
+            disabled={pending}
+            className="button button--primary"
+          >
+            {pending ? "Giriş yapılıyor…" : "Giriş yap"}
+          </button>
+        </div>
       </form>
     </div>
   );

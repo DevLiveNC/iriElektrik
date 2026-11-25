@@ -13,19 +13,31 @@ export interface ActionState {
   message?: string;
 }
 
-function revalidatePublic(slug?: string) {
+function revalidatePublic(slugs: string[] = []) {
   revalidatePath("/", "layout");
   revalidatePath("/yapilan-isler");
-  if (slug) revalidatePath(`/yapilan-isler/${slug}`);
+  for (const slug of new Set(slugs.filter(Boolean))) {
+    revalidatePath(`/yapilan-isler/${slug}`);
+  }
   revalidatePath("/sitemap.xml");
+  revalidatePath("/robots.txt");
 }
 
 function parseGallery(raw: string): string[] {
   return raw
     .split("\n")
-    .map((s) => s.trim())
+    .map((value) => value.trim())
     .filter(Boolean)
     .slice(0, 12);
+}
+
+function validationErrors(error: { issues: Array<{ path: PropertyKey[]; message: string }> }) {
+  const errors: Record<string, string> = {};
+  for (const issue of error.issues) {
+    const key = String(issue.path[0] ?? "form");
+    if (!errors[key]) errors[key] = issue.message;
+  }
+  return errors;
 }
 
 export async function saveJobAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -49,50 +61,43 @@ export async function saveJobAction(_prev: ActionState, formData: FormData): Pro
   };
 
   const parsed = jobSchema.safeParse(data);
-  if (!parsed.success) {
-    const errors: Record<string, string> = {};
-    for (const issue of parsed.error.issues) {
-      const key = String(issue.path[0] ?? "form");
-      if (!errors[key]) errors[key] = issue.message;
-    }
-    return { ok: false, errors };
-  }
+  if (!parsed.success) return { ok: false, errors: validationErrors(parsed.error) };
 
   if (parsed.data.status === "published") {
-    const pub = publishSchema.safeParse(parsed.data);
-    if (!pub.success) {
-      const errors: Record<string, string> = {};
-      for (const issue of pub.error.issues) {
-        const key = String(issue.path[0] ?? "form");
-        if (!errors[key]) errors[key] = issue.message;
-      }
-      return { ok: false, errors };
-    }
+    const publish = publishSchema.safeParse(parsed.data);
+    if (!publish.success) return { ok: false, errors: validationErrors(publish.error) };
   }
 
-  const all = await listJobs();
-  const slugTaken = all.some((j) => j.slug === parsed.data.slug && j.id !== id);
-  if (slugTaken) {
+  const all = await listJobs({ includeExamples: true });
+  if (all.some((job) => job.slug === parsed.data.slug && job.id !== id)) {
     return { ok: false, errors: { slug: "Bu slug zaten kullanılıyor. Farklı bir slug deneyin." } };
   }
 
-  const publishedAt =
-    parsed.data.status === "published" ? new Date().toISOString() : null;
+  const now = new Date().toISOString();
+  const publishedAt = parsed.data.status === "published" ? now : null;
 
   if (id) {
     const existing = await getJobById(id);
     if (!existing) return { ok: false, errors: { form: "Kayıt bulunamadı." } };
     await updateJob(id, {
       ...parsed.data,
-      publishedAt: existing.publishedAt ?? publishedAt,
+      publishedAt: parsed.data.status === "published" ? (existing.publishedAt ?? now) : null,
     });
-    revalidatePublic(parsed.data.slug);
-    redirect(`/admin?ok=${encodeURIComponent("İş kaydedildi.")}`);
+    revalidatePublic([existing.slug, parsed.data.slug]);
+    redirect(
+      `/admin?ok=${encodeURIComponent(
+        parsed.data.status === "published" ? "İş yayımlandı." : "Taslak kaydedildi.",
+      )}`,
+    );
   }
 
   await createJob({ ...parsed.data, publishedAt });
-  revalidatePublic(parsed.data.slug);
-  redirect(`/admin?ok=${encodeURIComponent("İş oluşturuldu.")}`);
+  revalidatePublic([parsed.data.slug]);
+  redirect(
+    `/admin?ok=${encodeURIComponent(
+      parsed.data.status === "published" ? "İş yayımlandı." : "Taslak kaydedildi.",
+    )}`,
+  );
 }
 
 export async function setStatusAction(id: string, status: JobStatus) {
@@ -100,16 +105,20 @@ export async function setStatusAction(id: string, status: JobStatus) {
   const job = await getJobById(id);
   if (!job) redirect("/admin");
   if (status === "published") {
-    const pub = publishSchema.safeParse(job);
-    if (!pub.success) {
-      redirect(`/admin/isler/${id}?hata=${encodeURIComponent("Yayımlamak için belirti, teşhis, uygulama ve sonuç alanları en az 10 karakter olmalı.")}`);
+    const publish = publishSchema.safeParse(job);
+    if (!publish.success) {
+      redirect(
+        `/admin/isler/${id}?hata=${encodeURIComponent(
+          "Yayımlamak için dört aşama metni, kapak fotoğrafı ve alt metin eksiksiz olmalı.",
+        )}`,
+      );
     }
   }
   await updateJob(id, {
     status,
     publishedAt: status === "published" ? (job.publishedAt ?? new Date().toISOString()) : job.publishedAt,
   });
-  revalidatePublic(job.slug);
+  revalidatePublic([job.slug]);
   const messages: Record<JobStatus, string> = {
     published: "İş yayımlandı.",
     draft: "İş taslağa alındı.",
@@ -122,7 +131,7 @@ export async function deleteJobAction(id: string) {
   await requireAdmin();
   const job = await getJobById(id);
   await deleteJob(id);
-  if (job) revalidatePublic(job.slug);
+  if (job) revalidatePublic([job.slug]);
   redirect(`/admin?ok=${encodeURIComponent("İş silindi.")}`);
 }
 
@@ -131,21 +140,24 @@ export async function toggleFeaturedAction(id: string) {
   const job = await getJobById(id);
   if (!job) redirect("/admin");
   await updateJob(id, { featured: !job.featured });
-  revalidatePublic(job.slug);
-  redirect(`/admin?ok=${encodeURIComponent(job.featured ? "Öne çıkarma kaldırıldı." : "İş öne çıkarıldı.")}`);
+  revalidatePublic([job.slug]);
+  redirect(
+    `/admin?ok=${encodeURIComponent(job.featured ? "Öne çıkarma kaldırıldı." : "İş öne çıkarıldı.")}`,
+  );
 }
 
 export async function moveJobAction(id: string, direction: "up" | "down") {
   await requireAdmin();
   const all = await listJobs();
-  const idx = all.findIndex((j) => j.id === id);
-  if (idx === -1) redirect("/admin");
-  const otherIdx = direction === "up" ? idx - 1 : idx + 1;
-  if (otherIdx < 0 || otherIdx >= all.length) redirect("/admin");
-  const a = all[idx];
-  const b = all[otherIdx];
-  await updateJob(a.id, { sortOrder: b.sortOrder });
-  await updateJob(b.id, { sortOrder: a.sortOrder });
+  const index = all.findIndex((job) => job.id === id);
+  const otherIndex = direction === "up" ? index - 1 : index + 1;
+  if (index === -1 || otherIndex < 0 || otherIndex >= all.length) redirect("/admin");
+  const a = all[index];
+  const b = all[otherIndex];
+  await Promise.all([
+    updateJob(a.id, { sortOrder: b.sortOrder }),
+    updateJob(b.id, { sortOrder: a.sortOrder }),
+  ]);
   revalidatePublic();
   redirect("/admin");
 }
@@ -158,7 +170,7 @@ export async function saveBusinessAction(_prev: ActionState, formData: FormData)
     services = JSON.parse(String(formData.get("servicesJson") ?? "[]"));
     hours = JSON.parse(String(formData.get("hoursJson") ?? "[]"));
   } catch {
-    return { ok: false, errors: { form: "Hizmet/saat verisi okunamadı." } };
+    return { ok: false, errors: { form: "Hizmet veya çalışma saati verisi okunamadı." } };
   }
   const data = {
     name: String(formData.get("name") ?? ""),
@@ -177,17 +189,14 @@ export async function saveBusinessAction(_prev: ActionState, formData: FormData)
     verified: formData.get("verified") === "on",
     heroTitle: String(formData.get("heroTitle") ?? ""),
     heroSubtitle: String(formData.get("heroSubtitle") ?? ""),
+    heroImage: String(formData.get("heroImage") ?? ""),
+    heroImageAlt: String(formData.get("heroImageAlt") ?? ""),
+    heroPhotoApproved: formData.get("heroPhotoApproved") === "on",
     services,
   };
   const parsed = businessSchema.safeParse(data);
-  if (!parsed.success) {
-    const errors: Record<string, string> = {};
-    for (const issue of parsed.error.issues) {
-      const key = String(issue.path[0] ?? "form");
-      if (!errors[key]) errors[key] = issue.message;
-    }
-    return { ok: false, errors };
-  }
+  if (!parsed.success) return { ok: false, errors: validationErrors(parsed.error) };
+
   await updateBusiness(parsed.data as Business);
   revalidatePublic();
   redirect(`/admin/ayarlar?ok=${encodeURIComponent("İşletme ayarları kaydedildi.")}`);

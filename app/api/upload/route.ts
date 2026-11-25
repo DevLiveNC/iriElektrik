@@ -3,6 +3,10 @@ import { put } from "@vercel/blob";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
+import { getSession } from "@/lib/auth";
+import { MEDIA_PATH_PREFIX } from "@/lib/media";
+
+export const runtime = "nodejs";
 
 const MAX_BYTES = 8 * 1024 * 1024; // 8 MB
 const ALLOWED: Record<string, string> = {
@@ -11,19 +15,27 @@ const ALLOWED: Record<string, string> = {
   "image/webp": "webp",
 };
 
-function detectType(buf: Buffer): string | null {
-  if (buf.length >= 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return "image/jpeg";
+function detectType(buffer: Buffer): string | null {
+  if (buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
+    return "image/jpeg";
+  }
   if (
-    buf.length >= 8 &&
-    buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47 &&
-    buf[4] === 0x0d && buf[5] === 0x0a && buf[6] === 0x1a && buf[7] === 0x0a
+    buffer.length >= 8 &&
+    buffer[0] === 0x89 &&
+    buffer[1] === 0x50 &&
+    buffer[2] === 0x4e &&
+    buffer[3] === 0x47 &&
+    buffer[4] === 0x0d &&
+    buffer[5] === 0x0a &&
+    buffer[6] === 0x1a &&
+    buffer[7] === 0x0a
   ) {
     return "image/png";
   }
   if (
-    buf.length >= 12 &&
-    buf.toString("ascii", 0, 4) === "RIFF" &&
-    buf.toString("ascii", 8, 12) === "WEBP"
+    buffer.length >= 12 &&
+    buffer.toString("ascii", 0, 4) === "RIFF" &&
+    buffer.toString("ascii", 8, 12) === "WEBP"
   ) {
     return "image/webp";
   }
@@ -31,6 +43,10 @@ function detectType(buf: Buffer): string | null {
 }
 
 export async function POST(req: Request) {
+  // Middleware'e ek olarak route içinde de oturum doğrulanır.
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Yetkisiz erişim." }, { status: 401 });
+
   const form = await req.formData().catch(() => null);
   const file = form?.get("file");
   if (!(file instanceof File)) {
@@ -51,13 +67,18 @@ export async function POST(req: Request) {
   const name = `${randomUUID()}.${ext}`;
 
   if (process.env.BLOB_READ_WRITE_TOKEN) {
-    const blob = await put(name, buffer, { access: "public", contentType: detected });
-    return NextResponse.json({ url: blob.url });
+    // Private blob; yalnızca /api/media erişim denetiminden sonra okunur.
+    await put(`uploads/${name}`, buffer, {
+      access: "private",
+      contentType: detected,
+      addRandomSuffix: false,
+    });
+    return NextResponse.json({ url: `${MEDIA_PATH_PREFIX}${name}` });
   }
 
-  // Yerel geliştirme: public/uploads altına yazılır.
-  const dir = join(process.cwd(), "public", "uploads");
+  // Yerel geliştirme: public dışında, Git'e alınmayan özel klasöre yazılır.
+  const dir = join(process.cwd(), "data", "uploads");
   await mkdir(dir, { recursive: true });
   await writeFile(join(dir, name), buffer);
-  return NextResponse.json({ url: `/uploads/${name}` });
+  return NextResponse.json({ url: `${MEDIA_PATH_PREFIX}${name}` });
 }

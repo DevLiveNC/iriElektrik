@@ -1,0 +1,302 @@
+{
+  "checks": [
+    {
+      "name": "Admin girişi yönlendirmesi",
+      "value": true,
+      "url": "http://127.0.0.1:3001/admin"
+    },
+    {
+      "name": "Oturum çerezi",
+      "value": true
+    },
+    {
+      "name": "Yetkisiz /admin",
+      "value": 307,
+      "location": "/admin/giris"
+    },
+    {
+      "name": "Yetkisiz /api/upload",
+      "value": 401
+    },
+    {
+      "name": "Hero fotoğrafı admin yüklemesi",
+      "value": true,
+      "path": "/api/media/3f437263-cad4-4d80-9f63-0c8f461216a9.jpg"
+    },
+    {
+      "name": "Onaysız hero fotoğrafı doğrudan erişimi",
+      "value": 404
+    },
+    {
+      "name": "İşletme ayarları kaydedildi",
+      "value": true,
+      "url": "http://127.0.0.1:3001/admin/ayarlar?ok=%C4%B0%C5%9Fletme%20ayarlar%C4%B1%20kaydedildi."
+    },
+    {
+      "name": "Çalışan tel: bağlantısı",
+      "value": "tel:+905321234567",
+      "expected": "tel:+905321234567"
+    },
+    {
+      "name": "Direkt yol tarifi URL’si",
+      "value": "https://www.google.com/maps/dir/?api=1&destination=36.8%2C34.6"
+    },
+    {
+      "name": "Harita iframe ilk yüklemede yok",
+      "value": 0
+    },
+    {
+      "name": "AutoRepair JSON-LD",
+      "value": true,
+      "telephone": "+905321234567",
+      "streetAddress": "E2E Atölye Sokak No 1, Mersin",
+      "openingHours": 2,
+      "rating": null,
+      "review": null
+    },
+    {
+      "name": "Bölge başlıkta",
+      "value": true,
+      "title": "İri Oto Elektrik — Yenişehir, Mersin oto elektrik"
+    },
+    {
+      "name": "Hizmetler bağlantısı hedefi",
+      "value": true
+    },
+    {
+      "name": "Arama tıklaması /api/event isteği",
+      "value": true,
+      "requests": 1
+    },
+    {
+      "name": "Verified 390px",
+      "value": {
+        "overflow": 0,
+        "ctaDisplay": "block",
+        "ctaRect": {
+          "top": 771,
+          "height": 73
+        },
+        "ctaLinks": [
+          {
+            "text": "Ara",
+            "href": "tel:+905321234567",
+            "height": 48
+          },
+          {
+            "text": "Yol tarifi",
+            "href": "https://www.google.com/maps/dir/?api=1&destination=36.8%2C34.6",
+            "height": 48
+          }
+        ],
+        "footerPaddingBottom": "104px",
+        "callCount": 5,
+        "directionsCount": 3
+      }
+    },
+    {
+      "name": "Form alanı odakta mobil çubuk gizli",
+      "value": true
+    },
+    {
+      "name": "Mobil çubuk alt bilgiyle çakışma (px, <=0 iyi)",
+      "value": -63
+    },
+    {
+      "name": "Verified 768px",
+      "value": {
+        "overflow": 0,
+        "ctaDisplay": "block",
+        "ctaRect": {
+          "top": 827,
+          "height": 73
+        },
+        "ctaLinks": [
+          {
+            "text": "Ara",
+            "href": "tel:+905321234567",
+            "height": 48
+          },
+          {
+            "text": "Yol tarifi",
+            "href": "https://www.google.com/maps/dir/?api=1&destination=36.8%2C34.6",
+            "height": 48
+          }
+        ],
+        "footerPaddingBottom": "104px",
+        "callCount": 5,
+        "directionsCount": 3
+      }
+    },
+    {
+      "name": "Verified 1440px",
+      "value": {
+        "overflow": 0,
+        "ctaDisplay": "none",
+        "ctaRect": {
+          "top": 0,
+          "height": 0
+        },
+        "ctaLinks": [
+          {
+            "text": "Ara",
+            "href": "tel:+905321234567",
+            "height": 0
+          },
+          {
+            "text": "Yol tarifi",
+            "href": "https://www.google.com/maps/dir/?api=1&destination=36.8%2C34.6",
+            "height": 0
+          }
+        ],
+        "footerPaddingBottom": "0px",
+        "callCount": 5,
+        "directionsCount": 3
+      }
+    },
+    {
+      "name": "Kapak fotoğrafı admin yüklemesi",
+      "value": true,
+      "path": "/api/media/e6643197-4561-4fb3-9ed9-5dee2790cbdf.jpg"
+    },
+    {
+      "name": "Taslak görseli anonim erişimi",
+      "value": 404
+    },
+    {
+      "name": "Taslak görseli oturumlu erişimi",
+      "value": 200
+    },
+    {
+      "name": "Taslak kaydedildi",
+      "value": true,
+      "url": "http://127.0.0.1:3001/admin?ok=Taslak%20kaydedildi."
+    },
+    {
+      "name": "Admin listede Taslak durumu",
+      "value": true
+    },
+    {
+      "name": "Taslak önizleme yetkili",
+      "value": 200
+    },
+    {
+      "name": "Taslak önizleme yetkisiz",
+      "value": 307,
+      "location": "/admin/giris"
+    },
+    {
+      "name": "Taslak public arşivde yok",
+      "value": true
+    },
+    {
+      "name": "Taslak detay URL’si 404",
+      "value": 404
+    },
+    {
+      "name": "Taslak sitemap’te yok",
+      "value": true
+    },
+    {
+      "name": "İş yayımlandı",
+      "value": true,
+      "url": "http://127.0.0.1:3001/admin?ok=%C4%B0%C5%9F%20yay%C4%B1mland%C4%B1."
+    },
+    {
+      "name": "Yayın ana sayfada görünüyor",
+      "value": true
+    },
+    {
+      "name": "Yayın görseli anonim erişimi",
+      "value": 200
+    },
+    {
+      "name": "Yayın arşivde görünüyor",
+      "value": true
+    },
+    {
+      "name": "Detay 200",
+      "value": 200
+    },
+    {
+      "name": "Detay dört aşama",
+      "value": true
+    },
+    {
+      "name": "Detay görseli yüklendi",
+      "value": true
+    },
+    {
+      "name": "Detay canonical",
+      "value": "https://iri-elektrik.vercel.app/yapilan-isler/e2e-mars-arizasi-onarimi"
+    },
+    {
+      "name": "Detay OG başlığı",
+      "value": "E2E marş arızası onarımı"
+    },
+    {
+      "name": "Detay robots",
+      "value": "index, follow"
+    },
+    {
+      "name": "Yayın sitemap’te",
+      "value": true
+    },
+    {
+      "name": "Slug değişikliği kaydedildi",
+      "value": true,
+      "url": "http://127.0.0.1:3001/admin?ok=%C4%B0%C5%9F%20yay%C4%B1mland%C4%B1."
+    },
+    {
+      "name": "Eski slug yönlendirmesi",
+      "value": 307,
+      "location": "/yapilan-isler/e2e-mars-arizasi-giderildi, /yapilan-isler/e2e-mars-arizasi-giderildi"
+    },
+    {
+      "name": "Yeni detay 200",
+      "value": 200
+    },
+    {
+      "name": "Yeni slug sitemap’te",
+      "value": true
+    },
+    {
+      "name": "Yayından kaldırıldı",
+      "value": true,
+      "url": "http://127.0.0.1:3001/admin?ok=%C4%B0%C5%9F%20tasla%C4%9Fa%20al%C4%B1nd%C4%B1."
+    },
+    {
+      "name": "Yayından kaldırma sonrası ana sayfada yok",
+      "value": true
+    },
+    {
+      "name": "Yayından kaldırma sonrası arşivde yok",
+      "value": true
+    },
+    {
+      "name": "Yayından kaldırma sonrası detay 404",
+      "value": 404
+    },
+    {
+      "name": "Yayından kaldırma sonrası sitemap’te yok",
+      "value": true
+    },
+    {
+      "name": "Yayından kaldırma sonrası görsel anonim erişimi",
+      "value": 404
+    }
+  ],
+  "requests": [
+    {
+      "url": "http://127.0.0.1:3001/api/event",
+      "method": "POST"
+    }
+  ],
+  "errors": [
+    "console: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "console: Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "ok": false,
+  "reviewedOk": true,
+  "reviewNote": "Tüm fonksiyonel kontroller geçti. İki console 404 kaydı, taslak ve yayından kaldırma sonrası bilinçli olarak istenen 404 detay URL testlerinden gelir; uygulama hatası değildir."
+}

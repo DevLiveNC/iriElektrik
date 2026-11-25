@@ -20,7 +20,7 @@ export default function LogoutButton() {
       type="button"
       onClick={logout}
       disabled={pending}
-      className="rounded-full border-2 border-petrol/25 px-4 py-2 font-semibold text-petrol transition-colors hover:border-petrol disabled:opacity-50"
+      className="admin-action"
     >
       {pending ? "Çıkılıyor…" : "Çıkış"}
     </button>

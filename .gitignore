@@ -1,11 +1,14 @@
 node_modules
 .next
+.next-*/
 out
 build
 .env*.local
 .env
 data/store.json
+data/uploads
 public/uploads
 *.log
+*.tsbuildinfo
 .DS_Store
 .vercel

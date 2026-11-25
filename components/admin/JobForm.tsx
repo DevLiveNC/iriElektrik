@@ -1,33 +1,36 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { CATEGORIES, STATUS_LABELS } from "@/lib/types";
+import { CATEGORIES } from "@/lib/types";
 import type { Job } from "@/lib/types";
+import { isPrivateMediaSrc } from "@/lib/media";
 import { saveJobAction, type ActionState } from "@/app/admin/actions";
 import { slugify } from "@/lib/validation";
 
 const initialState: ActionState = { ok: false, errors: {} };
+const narrativeFields = [
+  ["symptom", "Belirti"],
+  ["diagnosis", "Teşhis"],
+  ["application", "Uygulama"],
+  ["result", "Sonuç"],
+] as const;
 
-function FieldError({ message }: { message?: string }) {
+function FieldError({ id, message }: { id: string; message?: string }) {
   if (!message) return null;
   return (
-    <p role="alert" className="mt-1 text-sm font-semibold text-red-800">
+    <p id={id} role="alert" className="field-error">
       {message}
     </p>
   );
 }
 
-const inputCls =
-  "w-full rounded-lg border border-petrol/30 bg-white px-4 py-3 text-graphite placeholder:text-graphite/40";
-const labelCls = "mb-1 block font-semibold text-petrol";
-
 async function uploadFile(file: File): Promise<string> {
   const form = new FormData();
   form.append("file", file);
-  const res = await fetch("/api/upload", { method: "POST", body: form });
-  const data = (await res.json().catch(() => null)) as { url?: string; error?: string } | null;
-  if (!res.ok || !data?.url) throw new Error(data?.error ?? "Yükleme başarısız.");
+  const response = await fetch("/api/upload", { method: "POST", body: form });
+  const data = (await response.json().catch(() => null)) as { url?: string; error?: string } | null;
+  if (!response.ok || !data?.url) throw new Error(data?.error ?? "Yükleme başarısız.");
   return data.url;
 }
 
@@ -39,8 +42,40 @@ export default function JobForm({ job }: { job?: Job }) {
   const [gallery, setGallery] = useState<string[]>(job?.gallery ?? []);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [dirty, setDirty] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const statusRef = useRef<HTMLInputElement>(null);
+
+  const chooseStatus = (value: "draft" | "published") => {
+    // React 19 form-action gönderiminde submitter adı her zaman FormData'ya
+    // girmeyebilir; durumu gönderimden önce doğrudan gizli alana yazarız.
+    if (statusRef.current) statusRef.current.value = value;
+  };
 
   const busy = pending || uploading;
+  const errorKeys = Object.keys(state.errors);
+
+  useEffect(() => {
+    if (errorKeys.length === 0) return;
+    setDirty(true);
+    const first = errorKeys[0];
+    const selectorName =
+      first === "cover" ? "coverFile" : first === "gallery" ? "galleryFile" : first;
+    const field = formRef.current?.querySelector<HTMLElement>(
+      `[name="${CSS.escape(selectorName)}"]`,
+    );
+    field?.focus();
+  }, [state.errors]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
 
   const onCover = async (file: File | undefined) => {
     if (!file) return;
@@ -48,172 +83,226 @@ export default function JobForm({ job }: { job?: Job }) {
     setUploadError(null);
     try {
       setCover(await uploadFile(file));
-    } catch (e) {
-      setUploadError(e instanceof Error ? e.message : "Yükleme başarısız.");
+      setDirty(true);
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : "Yükleme başarısız.");
     } finally {
       setUploading(false);
     }
   };
 
   const onGallery = async (files: FileList | null) => {
-    if (!files) return;
+    if (!files || files.length === 0) return;
+    const room = 12 - gallery.length;
+    if (room <= 0) {
+      setUploadError("Galeriye en fazla 12 fotoğraf ekleyebilirsiniz.");
+      return;
+    }
     setUploading(true);
     setUploadError(null);
     try {
-      const urls: string[] = [];
-      for (const f of Array.from(files)) urls.push(await uploadFile(f));
-      setGallery((g) => [...g, ...urls].slice(0, 12));
-    } catch (e) {
-      setUploadError(e instanceof Error ? e.message : "Yükleme başarısız.");
+      const uploaded = await Promise.all(Array.from(files).slice(0, room).map(uploadFile));
+      setGallery((current) => [...current, ...uploaded].slice(0, 12));
+      setDirty(true);
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : "Yükleme başarısız.");
     } finally {
       setUploading(false);
     }
   };
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form
+      ref={formRef}
+      action={formAction}
+      className="admin-form"
+      onChange={() => setDirty(true)}
+      onSubmit={() => setDirty(false)}
+    >
       <input type="hidden" name="id" value={job?.id ?? ""} />
+      <input
+        ref={statusRef}
+        type="hidden"
+        name="status"
+        defaultValue={job?.status ?? "draft"}
+      />
       <input type="hidden" name="cover" value={cover} />
       <input type="hidden" name="gallery" value={gallery.join("\n")} />
 
-      <div>
-        <label htmlFor="title" className={labelCls}>
-          Başlık
-        </label>
-        <input
-          id="title"
-          name="title"
-          type="text"
-          required
-          autoComplete="off"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className={inputCls}
-          placeholder="Örn. Akü değişimi ve şarj ölçümü…"
-        />
-        <FieldError message={state.errors.title} />
-      </div>
+      <fieldset className="admin-fieldset">
+        <legend className="admin-fieldset__title">İş kaydı</legend>
 
-      <div>
-        <label htmlFor="slug" className={labelCls}>
-          Slug (adres)
-        </label>
-        <div className="flex gap-2">
+        <div className="field">
+          <label htmlFor="title" className="field-label">
+            Başlık
+          </label>
           <input
-            id="slug"
-            name="slug"
+            id="title"
+            name="title"
             type="text"
             required
             autoComplete="off"
-            spellCheck={false}
-            value={slug}
-            onChange={(e) => setSlug(e.target.value)}
-            className={inputCls}
-            placeholder="aku-degisimi…"
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            aria-invalid={Boolean(state.errors.title)}
+            aria-describedby={state.errors.title ? "title-error" : undefined}
+            className="field-input"
+            placeholder="Akü değişimi ve şarj ölçümü…"
           />
-          <button
-            type="button"
-            onClick={() => setSlug(slugify(title))}
-            className="shrink-0 rounded-lg border-2 border-petrol/25 px-4 font-bold text-petrol hover:border-petrol"
-          >
-            Başlıktan üret
-          </button>
+          <FieldError id="title-error" message={state.errors.title} />
         </div>
-        <FieldError message={state.errors.slug} />
-        <p className="mt-1 text-sm text-graphite/70">
-          Yayımlanmış slug sabit tutulur; değişirsen eski adres yeni adrese yönlendirilir.
-        </p>
-      </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label htmlFor="category" className={labelCls}>
-            Kategori
+        <div className="field">
+          <label htmlFor="slug" className="field-label">
+            Slug (adres)
           </label>
-          <select id="category" name="category" defaultValue={job?.category ?? CATEGORIES[0]} className={inputCls}>
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-          <FieldError message={state.errors.category} />
-        </div>
-        <div>
-          <label htmlFor="vehicle" className={labelCls}>
-            Araç bilgisi (isteğe bağlı)
-          </label>
-          <input
-            id="vehicle"
-            name="vehicle"
-            type="text"
-            autoComplete="off"
-            defaultValue={job?.vehicle ?? ""}
-            className={inputCls}
-            placeholder="Örn. 2015 model sedan…"
-          />
-        </div>
-      </div>
-
-      {(
-        [
-          ["symptom", "Belirti"],
-          ["diagnosis", "Teşhis"],
-          ["application", "Uygulama"],
-          ["result", "Sonuç"],
-        ] as const
-      ).map(([name, label]) => (
-        <div key={name}>
-          <label htmlFor={name} className={labelCls}>
-            {label}
-          </label>
-          <textarea
-            id={name}
-            name={name}
-            rows={3}
-            defaultValue={job?.[name] ?? ""}
-            className={inputCls}
-            placeholder={`${label} bilgisini açık Türkçeyle yazın…`}
-          />
-          <FieldError message={state.errors[name]} />
-        </div>
-      ))}
-
-      <fieldset className="rounded-xl border border-petrol/20 p-4">
-        <legend className="px-2 font-semibold text-petrol">Kapak fotoğrafı</legend>
-        {cover && (
-          <div className="relative mb-3 h-40 w-64 overflow-hidden rounded-lg bg-paper-2">
-            <Image src={cover} alt="Kapak önizleme" fill sizes="256px" className="object-cover" />
+          <div className="field-grid">
+            <input
+              id="slug"
+              name="slug"
+              type="text"
+              required
+              autoComplete="off"
+              spellCheck={false}
+              value={slug}
+              onChange={(event) => setSlug(event.target.value)}
+              aria-invalid={Boolean(state.errors.slug)}
+              aria-describedby={state.errors.slug ? "slug-error" : undefined}
+              className="field-input"
+              placeholder="aku-degisimi…"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                setSlug(slugify(title));
+                setDirty(true);
+              }}
+              className="button button--secondary"
+            >
+              Başlıktan üret
+            </button>
           </div>
-        )}
-        <label htmlFor="cover-file" className={labelCls}>
-          Dosya seç (JPEG/PNG/WebP, en fazla 8 MB)
-        </label>
-        <input
-          id="cover-file"
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          onChange={(e) => void onCover(e.target.files?.[0])}
-          disabled={uploading}
-          className="block w-full rounded-lg border border-petrol/30 bg-white px-4 py-3"
-        />
-        <p className="mt-1 text-sm text-graphite/70">
-          Yükleme bitmeden kayıt yayımlanmaz. Başarısız yüklemede eski kapak korunur.
-        </p>
+          <FieldError id="slug-error" message={state.errors.slug} />
+          <p className="field-hint">
+            Yayımlanmış slug değişirse eski adres yeni adrese yönlendirilir.
+          </p>
+        </div>
+
+        <div className="field-grid">
+          <div className="field">
+            <label htmlFor="category" className="field-label">
+              Kategori
+            </label>
+            <select
+              id="category"
+              name="category"
+              defaultValue={job?.category ?? CATEGORIES[0]}
+              aria-invalid={Boolean(state.errors.category)}
+              className="field-input"
+            >
+              {CATEGORIES.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
+            <FieldError id="category-error" message={state.errors.category} />
+          </div>
+          <div className="field">
+            <label htmlFor="vehicle" className="field-label">
+              Araç bilgisi (isteğe bağlı)
+            </label>
+            <input
+              id="vehicle"
+              name="vehicle"
+              type="text"
+              autoComplete="off"
+              defaultValue={job?.vehicle ?? ""}
+              className="field-input"
+              placeholder="2015 model sedan…"
+            />
+          </div>
+        </div>
+
+        {narrativeFields.map(([name, label]) => (
+          <div key={name} className="field">
+            <label htmlFor={name} className="field-label">
+              {label}
+            </label>
+            <textarea
+              id={name}
+              name={name}
+              rows={3}
+              autoComplete="off"
+              defaultValue={job?.[name] ?? ""}
+              aria-invalid={Boolean(state.errors[name])}
+              aria-describedby={state.errors[name] ? `${name}-error` : undefined}
+              className="field-textarea"
+              placeholder={`${label} bilgisini açık Türkçeyle yazın…`}
+            />
+            <FieldError id={`${name}-error`} message={state.errors[name]} />
+          </div>
+        ))}
       </fieldset>
 
-      <fieldset className="rounded-xl border border-petrol/20 p-4">
-        <legend className="px-2 font-semibold text-petrol">Galeri (en fazla 12)</legend>
+      <fieldset className="admin-fieldset">
+        <legend className="admin-fieldset__title">Kapak fotoğrafı</legend>
+        <p className="admin-fieldset__intro">
+          Yayımlamak için gerçek bir kapak fotoğrafı ve anlamlı alt metin gerekir.
+        </p>
+        {cover && (
+          <div className="image-preview">
+            <Image
+              src={cover}
+              alt="Kapak önizleme"
+              fill
+              sizes="320px"
+              unoptimized={isPrivateMediaSrc(cover)}
+            />
+          </div>
+        )}
+        <div className="field">
+          <label htmlFor="cover-file" className="field-label">
+            Dosya seç (JPEG/PNG/WebP, en fazla 8 MB)
+          </label>
+          <input
+            id="cover-file"
+            name="coverFile"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            autoComplete="off"
+            onChange={(event) => void onCover(event.target.files?.[0])}
+            disabled={uploading}
+            className="field-input"
+          />
+          <p className="field-hint">
+            Yükleme bitmeden kayıt yayımlanmaz. Başarısız yüklemede eski kapak korunur.
+          </p>
+          <FieldError id="cover-error" message={state.errors.cover} />
+        </div>
+      </fieldset>
+
+      <fieldset className="admin-fieldset">
+        <legend className="admin-fieldset__title">Galeri (en fazla 12)</legend>
         {gallery.length > 0 && (
-          <ul className="mb-3 flex flex-wrap gap-2">
+          <ul className="gallery-preview">
             {gallery.map((src) => (
-              <li key={src} className="relative h-20 w-28 overflow-hidden rounded-lg bg-paper-2">
-                <Image src={src} alt="Galeri fotoğrafı" fill sizes="112px" className="object-cover" />
+              <li key={src} className="gallery-preview__item">
+                <Image
+                  src={src}
+                  alt="Galeri fotoğrafı"
+                  fill
+                  sizes="112px"
+                  unoptimized={isPrivateMediaSrc(src)}
+                />
                 <button
                   type="button"
                   aria-label="Fotoğrafı kaldır"
-                  onClick={() => setGallery((g) => g.filter((u) => u !== src))}
-                  className="absolute right-1 top-1 rounded-full bg-petrol px-2 py-0.5 text-xs font-bold text-lime"
+                  onClick={() => {
+                    setGallery((current) => current.filter((url) => url !== src));
+                    setDirty(true);
+                  }}
+                  className="gallery-preview__remove"
                 >
                   Kaldır
                 </button>
@@ -221,105 +310,107 @@ export default function JobForm({ job }: { job?: Job }) {
             ))}
           </ul>
         )}
-        <label htmlFor="gallery-file" className={labelCls}>
-          Fotoğraf ekle
-        </label>
-        <input
-          id="gallery-file"
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          multiple
-          onChange={(e) => void onGallery(e.target.files)}
-          disabled={uploading}
-          className="block w-full rounded-lg border border-petrol/30 bg-white px-4 py-3"
-        />
-      </fieldset>
-
-      <div>
-        <label htmlFor="alt" className={labelCls}>
-          Fotoğraf alt metni
-        </label>
-        <input
-          id="alt"
-          name="alt"
-          type="text"
-          autoComplete="off"
-          defaultValue={job?.alt ?? ""}
-          className={inputCls}
-          placeholder="Örn. Akü kutup başı temizliği…"
-        />
-        <FieldError message={state.errors.alt} />
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div>
-          <label htmlFor="status" className={labelCls}>
-            Durum
-          </label>
-          <select id="status" name="status" defaultValue={job?.status ?? "draft"} className={inputCls}>
-            {(Object.keys(STATUS_LABELS) as Array<keyof typeof STATUS_LABELS>).map((s) => (
-              <option key={s} value={s}>
-                {STATUS_LABELS[s]}
-              </option>
-            ))}
-          </select>
-          <FieldError message={state.errors.status} />
-        </div>
-        <div>
-          <label htmlFor="sortOrder" className={labelCls}>
-            Sıralama
+        <div className="field">
+          <label htmlFor="gallery-file" className="field-label">
+            Fotoğraf ekle
           </label>
           <input
-            id="sortOrder"
-            name="sortOrder"
-            type="number"
-            inputMode="numeric"
-            min={0}
-            max={9999}
-            defaultValue={job?.sortOrder ?? 0}
-            className={inputCls}
+            id="gallery-file"
+            name="galleryFile"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            autoComplete="off"
+            multiple
+            onChange={(event) => void onGallery(event.target.files)}
+            disabled={uploading}
+            className="field-input"
           />
+          <FieldError id="gallery-error" message={state.errors.gallery} />
         </div>
-        <div className="flex items-end pb-1">
-          <label htmlFor="featured" className="flex items-center gap-2 font-semibold text-petrol">
+      </fieldset>
+
+      <fieldset className="admin-fieldset">
+        <legend className="admin-fieldset__title">Yayın ayrıntıları</legend>
+        <div className="field">
+          <label htmlFor="alt" className="field-label">
+            Fotoğraf alt metni
+          </label>
+          <input
+            id="alt"
+            name="alt"
+            type="text"
+            autoComplete="off"
+            defaultValue={job?.alt ?? ""}
+            aria-invalid={Boolean(state.errors.alt)}
+            aria-describedby={state.errors.alt ? "alt-error" : undefined}
+            className="field-input"
+            placeholder="Akü kutup başı temizliği…"
+          />
+          <FieldError id="alt-error" message={state.errors.alt} />
+        </div>
+        <div className="field-grid">
+          <div className="field">
+            <label htmlFor="sortOrder" className="field-label">
+              Sıralama
+            </label>
+            <input
+              id="sortOrder"
+              name="sortOrder"
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={9999}
+              defaultValue={job?.sortOrder ?? 0}
+              className="field-input"
+            />
+          </div>
+          <div className="field checkbox-field">
             <input
               id="featured"
               name="featured"
               type="checkbox"
               defaultChecked={job?.featured ?? false}
-              className="h-5 w-5 accent-[#102A2A]"
             />
-            Öne çıkar
-          </label>
+            <label htmlFor="featured">Öne çıkar</label>
+          </div>
         </div>
-      </div>
+      </fieldset>
 
       {uploadError && (
-        <p role="alert" className="rounded-lg border border-red-700/40 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">
+        <p role="alert" aria-live="polite" className="form-error">
           {uploadError}
         </p>
       )}
       {state.errors.form && (
-        <p role="alert" className="rounded-lg border border-red-700/40 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">
+        <p role="alert" aria-live="polite" className="form-error">
           {state.errors.form}
         </p>
       )}
 
-      <div className="flex flex-col gap-2 sm:flex-row">
+      <div className="admin-form__actions">
         <button
           type="submit"
+          onClick={() => chooseStatus("draft")}
           disabled={busy}
-          className="flex-1 rounded-full bg-lime px-6 py-3.5 font-bold text-petrol transition-colors hover:bg-lime-deep disabled:opacity-60"
+          className="button button--secondary"
         >
-          {pending ? "Kaydediliyor…" : uploading ? "Fotoğraf yükleniyor…" : "Kaydet"}
+          Taslak kaydet
         </button>
-        <a
-          href="/admin"
-          className="flex-1 rounded-full border-2 border-petrol/25 px-6 py-3.5 text-center font-bold text-petrol hover:border-petrol"
+        <button
+          type="submit"
+          onClick={() => chooseStatus("published")}
+          disabled={busy}
+          className="button button--primary"
         >
+          Yayımla
+        </button>
+        <a href="/admin" className="button button--secondary">
           Vazgeç
         </a>
       </div>
+      <p className="form-status" role="status" aria-live="polite">
+        {uploading ? "Fotoğraf yükleniyor…" : pending ? "Kaydediliyor…" : ""}
+      </p>
     </form>
   );
 }

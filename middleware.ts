@@ -14,12 +14,13 @@ export async function middleware(req: NextRequest) {
   }
 
   if (pathname.startsWith("/admin")) {
-    if (isLogin) {
-      if (ok) return NextResponse.redirect(new URL("/admin", req.url));
-      return NextResponse.next();
-    }
-    if (!ok) return NextResponse.redirect(new URL("/admin/giris", req.url));
-    return NextResponse.next();
+    const response = isLogin && ok
+      ? NextResponse.redirect(new URL("/admin", req.url))
+      : !isLogin && !ok
+        ? NextResponse.redirect(new URL("/admin/giris", req.url))
+        : NextResponse.next();
+    response.headers.set("X-Robots-Tag", "noindex, nofollow");
+    return response;
   }
 
   return NextResponse.next();

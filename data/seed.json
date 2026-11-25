@@ -1,11 +1,11 @@
 {
   "business": {
     "name": "İri Oto Elektrik",
-    "district": "Örnek Mahalle",
-    "city": "Mersin",
-    "address": "Örnek adres — doğrulanacak",
-    "phone": "0 (000) 000 00 00",
-    "phoneHref": "tel:+900000000000",
+    "district": "",
+    "city": "",
+    "address": "",
+    "phone": "",
+    "phoneHref": "",
     "whatsapp": "",
     "email": "",
     "lat": null,
@@ -15,102 +15,41 @@
     "profileUrl": "",
     "verified": false,
     "heroTitle": "Aracın elektriğini çözüyoruz.",
-    "heroSubtitle": "Akü, şarj, marş ve tesisat arızalarında yerinde tespit ve onarım. Aradığında konumunu ve ne yapman gerektiğini net söyleriz.",
+    "heroSubtitle": "Akü, şarj, marş, aydınlatma ve tesisat arızalarında ölçüm ve arıza tespiti. Sorunun nedenini sade bir dille anlatıyoruz.",
+    "heroImage": "",
+    "heroImageAlt": "",
+    "heroPhotoApproved": false,
     "services": [
       {
         "id": "aku-sarj",
         "title": "Akü ve şarj sistemi",
-        "symptom": "Sabahları marş zorluyor, farlar zayıf yanıyor, akü uyarı lambası yanıyor.",
+        "symptom": "Sabahları marş zorluyor, farlar zayıf yanıyor veya akü uyarı lambası yanıyor.",
         "service": "Akü ölçümü, şarj dinamosu kontrolü, kutup başı ve kablo temizliği, uygun akü değişimi.",
-        "approved": false
+        "approved": true
       },
       {
         "id": "mars-alternator",
         "title": "Marş ve alternatör",
-        "symptom": "Marş sesi geliyor ama motor dönmüyor ya da şarj lambası sürüşte yanıyor.",
-        "service": "Marş motoru ve alternatör söküm, kömür/konjektör kontrolü, onarım veya değişim.",
-        "approved": false
+        "symptom": "Kontakta tık sesi geliyor, motor dönmüyor ya da şarj lambası sürüşte yanıyor.",
+        "service": "Marş motoru ve alternatör kontrolü, kömür/konjektör incelemesi, onarım veya değişim.",
+        "approved": true
       },
       {
         "id": "aydinlatma",
         "title": "Aydınlatma",
-        "symptom": "Far, stop veya sinyal lambalarından biri yanmıyor, sık ampul patlıyor.",
-        "service": "Ampul ve duy kontrolü, sigorta ve röle, far ayarı ve soket onarımı.",
-        "approved": false
+        "symptom": "Far, stop veya sinyal lambalarından biri yanmıyor; ampul sık sık patlıyor.",
+        "service": "Ampul ve duy kontrolü, sigorta ve röle takibi, far ayarı ve soket onarımı.",
+        "approved": true
       },
       {
         "id": "tesisat-ariza",
         "title": "Tesisat ve arıza tespiti",
         "symptom": "Gösterge ışıkları rastgele yanıyor, camlar veya merkezi kilit çalışmıyor.",
         "service": "Arıza tespit cihazıyla tarama, kablo tesisatı kontrolü, oksit ve temas hatası onarımı.",
-        "approved": false
+        "approved": true
       }
     ]
   },
-  "jobs": [
-    {
-      "id": "ornek-aku-degisimi",
-      "title": "Akü değişimi ve şarj ölçümü (örnek kayıt)",
-      "slug": "aku-degisimi-ornek",
-      "category": "Akü ve şarj",
-      "vehicle": "Örnek araç — doğrulanacak",
-      "symptom": "Sabahları marş zorluyor, akü uyarı lambası yanıyordu.",
-      "diagnosis": "Akü gerilimi 11,8 V ölçüldü; şarj dinamosu 14,2 V üretiyordu.",
-      "application": "Akü yenisiyle değiştirildi, kutup başları temizlendi.",
-      "result": "Marş ilk denemede aldı, şarj lambası söndü.",
-      "cover": "",
-      "gallery": [],
-      "alt": "Örnek kayıt — gerçek atölye fotoğrafı eklenecek",
-      "status": "published",
-      "featured": true,
-      "sortOrder": 10,
-      "publishedAt": "2026-11-01T09:00:00.000Z",
-      "createdAt": "2026-11-01T09:00:00.000Z",
-      "updatedAt": "2026-11-01T09:00:00.000Z",
-      "isExample": true
-    },
-    {
-      "id": "ornek-mars-onarimi",
-      "title": "Marş motoru kömür değişimi (örnek kayıt)",
-      "slug": "mars-motoru-ornek",
-      "category": "Marş ve alternatör",
-      "vehicle": "Örnek araç — doğrulanacak",
-      "symptom": "Kontakta tık sesi geliyor, motor dönmüyordu.",
-      "diagnosis": "Marş motoru kömürleri bitmişti, kolektör yüzeyi kirliydi.",
-      "application": "Kömürler yenilendi, kolektör temizlendi.",
-      "result": "Motor ilk marşta çalıştı.",
-      "cover": "",
-      "gallery": [],
-      "alt": "Örnek kayıt — gerçek atölye fotoğrafı eklenecek",
-      "status": "published",
-      "featured": true,
-      "sortOrder": 20,
-      "publishedAt": "2026-11-10T09:00:00.000Z",
-      "createdAt": "2026-11-10T09:00:00.000Z",
-      "updatedAt": "2026-11-10T09:00:00.000Z",
-      "isExample": true
-    },
-    {
-      "id": "ornek-far-onarimi",
-      "title": "Far soketi ve sigorta onarımı (örnek kayıt)",
-      "slug": "far-onarimi-ornek",
-      "category": "Aydınlatma",
-      "vehicle": "Örnek araç — doğrulanacak",
-      "symptom": "Sol far yanmıyor, sigorta tekrar atıyordu.",
-      "diagnosis": "Soket içi oksit ve erimiş plastik temas kaybına yol açıyordu.",
-      "application": "Soket yenilendi, sigorta değeri kontrol edildi.",
-      "result": "Far çalıştı, sigorta atmıyor.",
-      "cover": "",
-      "gallery": [],
-      "alt": "Örnek kayıt — gerçek atölye fotoğrafı eklenecek",
-      "status": "published",
-      "featured": false,
-      "sortOrder": 30,
-      "publishedAt": "2026-11-15T09:00:00.000Z",
-      "createdAt": "2026-11-15T09:00:00.000Z",
-      "updatedAt": "2026-11-15T09:00:00.000Z",
-      "isExample": true
-    }
-  ],
-  "redirects": []
+  "jobs": [],
+  "redirects": {}
 }
