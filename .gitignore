@@ -1,0 +1,11 @@
+node_modules
+.next
+out
+build
+.env*.local
+.env
+data/store.json
+public/uploads
+*.log
+.DS_Store
+.vercel
