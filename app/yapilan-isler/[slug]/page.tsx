@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import ScrollRevealSection from "@/components/motion/ScrollRevealSection";
 import { getPublishedJobBySlug, getRedirect, listPublishedJobs } from "@/lib/store";
 import { isIndexableProduction } from "@/lib/seo";
 
@@ -73,21 +74,21 @@ export default async function JobDetailPage({
   const publishedAt = job.publishedAt ? dateFmt.format(new Date(job.publishedAt)) : null;
 
   return (
-    <div className="public-page">
+    <ScrollRevealSection>
       <article className="job-detail">
-        <div className="job-detail__head">
+        <div className="job-detail__head" data-gsap-item>
           <Link href="/yapilan-isler" className="breadcrumb">
             ← Tüm işler
           </Link>
           <p className="job-category">{job.category}</p>
           <h1 className="job-title">{job.title}</h1>
-          <p className="job-meta">
+          <p className="job-meta tabular">
             {job.vehicle ? `${job.vehicle} · ` : ""}
             {publishedAt ?? "Yayımlanmış kayıt"}
           </p>
         </div>
 
-        <figure className="job-cover">
+        <figure className="job-cover" data-gsap-item>
           <div className="job-cover__frame">
             <Image
               src={job.cover}
@@ -103,9 +104,9 @@ export default async function JobDetailPage({
 
         <dl className="job-steps">
           {STEPS.map((step) => (
-            <div key={step.key} className="job-step">
+            <div key={step.key} className="job-step" data-gsap-item>
               <dt className="job-step__label">
-                <span className="job-step__num">{step.code}</span>
+                <span className="job-step__num tabular">{step.code}</span>
                 <span>{step.label}</span>
               </dt>
               <dd className="job-step__value">{job[step.key]}</dd>
@@ -113,8 +114,8 @@ export default async function JobDetailPage({
           ))}
         </dl>
 
-        {gallery.length > 0 ? (
-          <section aria-labelledby="galeri-baslik" className="gallery">
+        {gallery.length > 0 && (
+          <section aria-labelledby="galeri-baslik" className="gallery" data-gsap-item>
             <h2 id="galeri-baslik" className="section-title">
               Fotoğraflar
             </h2>
@@ -133,8 +134,8 @@ export default async function JobDetailPage({
               ))}
             </div>
           </section>
-        ) : null}
+        )}
       </article>
-    </div>
+    </ScrollRevealSection>
   );
 }

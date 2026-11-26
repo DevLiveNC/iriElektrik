@@ -14,9 +14,6 @@ interface ServiceRow {
   symptom: string;
   service: string;
   approved: boolean;
-  image: string;
-  imageAlt: string;
-  proposed: boolean;
 }
 
 interface HoursRow {
@@ -45,18 +42,7 @@ async function uploadFile(file: File): Promise<string> {
 
 export default function SettingsForm({ business }: { business: Business }) {
   const [state, formAction, pending] = useActionState(saveBusinessAction, initialState);
-  const [services, setServices] = useState<ServiceRow[]>(
-    business.services.map((service) => ({
-      id: service.id,
-      title: service.title,
-      symptom: service.symptom,
-      service: service.service,
-      approved: service.approved,
-      image: service.image ?? "",
-      imageAlt: service.imageAlt ?? "",
-      proposed: service.proposed ?? false,
-    })),
-  );
+  const [services, setServices] = useState<ServiceRow[]>(business.services);
   const [hours, setHours] = useState<HoursRow[]>(business.hours);
   const [heroImage, setHeroImage] = useState(business.heroImage);
   const [heroImageAlt, setHeroImageAlt] = useState(business.heroImageAlt);
@@ -367,45 +353,6 @@ export default function SettingsForm({ business }: { business: Business }) {
           />
           <FieldError id="heroSubtitle-error" message={state.errors.heroSubtitle} />
         </div>
-        <div className="field">
-          <label htmlFor="heroSubtitleSecondary" className="field-label">
-            İkinci satır (opsiyonel)
-          </label>
-          <textarea
-            id="heroSubtitleSecondary"
-            name="heroSubtitleSecondary"
-            rows={2}
-            autoComplete="off"
-            defaultValue={business.heroSubtitleSecondary}
-            className="field-textarea"
-          />
-          <p className="field-hint">
-            Resmî açıklama değişmez; bu satır yalnızca onay verirsen başlığın altında görünür.
-          </p>
-        </div>
-        <label htmlFor="heroSecondaryEnabled" className="checkbox-field">
-          <input
-            id="heroSecondaryEnabled"
-            name="heroSecondaryEnabled"
-            type="checkbox"
-            defaultChecked={business.heroSecondaryEnabled}
-          />
-          İkinci satırı göster
-        </label>
-        <div className="field">
-          <label htmlFor="shortDescription" className="field-label">
-            Kısa tanım (alt bilgi)
-          </label>
-          <textarea
-            id="shortDescription"
-            name="shortDescription"
-            rows={2}
-            autoComplete="off"
-            defaultValue={business.shortDescription}
-            className="field-textarea"
-          />
-          <p className="field-hint">Alt bilgide ve kısa özetlerde kullanılan cümle.</p>
-        </div>
       </fieldset>
 
       <fieldset className="admin-fieldset">
@@ -598,36 +545,6 @@ export default function SettingsForm({ business }: { business: Business }) {
                   placeholder="İşletmenin sunduğu hizmet…"
                 />
               </div>
-              <div className="field">
-                <label className="sr-only" htmlFor={`service-image-${index}`}>
-                  Hizmet fotoğrafı
-                </label>
-                <input
-                  id={`service-image-${index}`}
-                  name={`service-image-${index}`}
-                  type="text"
-                  autoComplete="off"
-                  value={service.image}
-                  onChange={(event) => updateService(index, { image: event.target.value })}
-                  className="field-input"
-                  placeholder="Yüklenen görselin bağlantısı (boş bırakılabilir)…"
-                />
-              </div>
-              <div className="field">
-                <label className="sr-only" htmlFor={`service-image-alt-${index}`}>
-                  Hizmet fotoğrafı alt metni
-                </label>
-                <input
-                  id={`service-image-alt-${index}`}
-                  name={`service-image-alt-${index}`}
-                  type="text"
-                  autoComplete="off"
-                  value={service.imageAlt}
-                  onChange={(event) => updateService(index, { imageAlt: event.target.value })}
-                  className="field-input"
-                  placeholder="Fotoğrafı anlatan Türkçe alt metin…"
-                />
-              </div>
               <div className="service-editor__footer">
                 <label className="checkbox-field" htmlFor={`service-approved-${index}`}>
                   <input
@@ -638,16 +555,6 @@ export default function SettingsForm({ business }: { business: Business }) {
                     onChange={(event) => updateService(index, { approved: event.target.checked })}
                   />
                   Onaylı
-                </label>
-                <label className="checkbox-field" htmlFor={`service-proposed-${index}`}>
-                  <input
-                    id={`service-proposed-${index}`}
-                    name={`service-proposed-${index}`}
-                    type="checkbox"
-                    checked={service.proposed}
-                    onChange={(event) => updateService(index, { proposed: event.target.checked })}
-                  />
-                  Yeni kapsam
                 </label>
                 <button
                   type="button"
@@ -674,9 +581,6 @@ export default function SettingsForm({ business }: { business: Business }) {
                 symptom: "",
                 service: "",
                 approved: false,
-                image: "",
-                imageAlt: "",
-                proposed: false,
               },
             ])
           }

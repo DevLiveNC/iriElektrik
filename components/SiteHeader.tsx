@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import gsap from "gsap";
 
 interface Props {
   name: string;
   phoneHref: string;
   phoneLabel: string;
   showPhone: boolean;
-  whatsappHref: string;
   hasServices: boolean;
 }
 
@@ -17,11 +17,11 @@ export default function SiteHeader({
   phoneHref,
   phoneLabel,
   showPhone,
-  whatsappHref,
   hasServices,
 }: Props) {
   const [open, setOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const mobileNavRef = useRef<HTMLElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
 
   const items = [
@@ -33,12 +33,11 @@ export default function SiteHeader({
 
   useEffect(() => {
     const onScroll = () => {
-      const fill = progressRef.current;
-      if (!fill) return;
+      if (!progressRef.current) return;
       const doc = document.documentElement;
       const maxScroll = Math.max(1, doc.scrollHeight - window.innerHeight);
       const ratio = Math.max(0, Math.min(1, window.scrollY / maxScroll));
-      fill.style.transform = `scaleX(${ratio})`;
+      progressRef.current.style.transform = `scaleX(${ratio})`;
     };
 
     onScroll();
@@ -48,6 +47,22 @@ export default function SiteHeader({
 
   useEffect(() => {
     if (!open) return;
+
+    const navEl = mobileNavRef.current;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (navEl && !reduced) {
+      gsap.fromTo(
+        navEl,
+        { opacity: 0, y: -6 },
+        { opacity: 1, y: 0, duration: 0.22, ease: "power2.out" },
+      );
+      gsap.fromTo(
+        navEl.querySelectorAll("[data-mnav-item]"),
+        { opacity: 0, y: 6 },
+        { opacity: 1, y: 0, duration: 0.26, stagger: 0.04, ease: "power2.out" },
+      );
+    }
+
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setOpen(false);
@@ -78,29 +93,16 @@ export default function SiteHeader({
               {item.label}
             </Link>
           ))}
-          <div className="site-nav__actions">
-            {whatsappHref ? (
-              <a
-                href={whatsappHref}
-                target="_blank"
-                rel="noreferrer"
-                data-event="whatsapp"
-                className="button button--primary button--small"
-              >
-                WhatsApp
-              </a>
-            ) : null}
-            {showPhone ? (
-              <a
-                href={phoneHref}
-                className="button button--metal button--small"
-                data-event="ara"
-                aria-label={`Hemen ara — ${phoneLabel}`}
-              >
-                Hemen ara
-              </a>
-            ) : null}
-          </div>
+          {showPhone && (
+            <a
+              href={phoneHref}
+              className="button button--primary button--small site-nav__cta"
+              data-event="ara"
+              aria-label={`Hemen ara — ${phoneLabel}`}
+            >
+              Hemen ara
+            </a>
+          )}
         </nav>
 
         <button
@@ -120,11 +122,16 @@ export default function SiteHeader({
         <div ref={progressRef} className="site-header__progress-fill" />
       </div>
 
-      {open ? (
-        <nav id="mobil-menu" aria-label="Mobil gezinme" className="mobile-nav">
+      {open && (
+        <nav
+          id="mobil-menu"
+          ref={mobileNavRef}
+          aria-label="Mobil gezinme"
+          className="mobile-nav"
+        >
           <ul className="mobile-nav__list">
             {items.map((item) => (
-              <li key={item.href}>
+              <li key={item.href} data-mnav-item>
                 <Link
                   href={item.href}
                   className="mobile-nav__link"
@@ -134,36 +141,22 @@ export default function SiteHeader({
                 </Link>
               </li>
             ))}
-            {whatsappHref || showPhone ? (
-              <li className="mobile-nav__actions">
-                {whatsappHref ? (
-                  <a
-                    href={whatsappHref}
-                    target="_blank"
-                    rel="noreferrer"
-                    data-event="whatsapp"
-                    className="button button--primary"
-                    onClick={() => setOpen(false)}
-                  >
-                    WhatsApp
-                  </a>
-                ) : null}
-                {showPhone ? (
-                  <a
-                    href={phoneHref}
-                    data-event="ara"
-                    className="button button--metal"
-                    onClick={() => setOpen(false)}
-                    aria-label={`Hemen ara — ${phoneLabel}`}
-                  >
-                    Hemen ara
-                  </a>
-                ) : null}
+            {showPhone && (
+              <li data-mnav-item>
+                <a
+                  href={phoneHref}
+                  data-event="ara"
+                  className="button button--primary mobile-nav__cta"
+                  onClick={() => setOpen(false)}
+                  aria-label={`Hemen ara — ${phoneLabel}`}
+                >
+                  Hemen ara
+                </a>
               </li>
-            ) : null}
+            )}
           </ul>
         </nav>
-      ) : null}
+      )}
     </header>
   );
 }

@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 interface Props {
   phoneHref: string;
   phoneLabel: string;
-  whatsappHref: string;
   mapsUrl: string;
   showPhone: boolean;
   showMaps: boolean;
@@ -23,20 +22,17 @@ function isEditable(target: EventTarget | null): boolean {
 /**
  * Tek istemci adası: tüm CTA tıklamalarını document üzerinde ölçer,
  * yalnızca doğrulanmış eylemler için mobil çubuğu render eder. Form alanına
- * veya görselleştirme kontrollerine odaklanıldığında çubuk kalkar; safe-area
- * ve alt boşluk CSS tarafından korunur.
+ * odaklanıldığında çubuk kalkar; safe-area ve alt boşluk CSS tarafından korunur.
  */
 export default function PublicActions({
   phoneHref,
   phoneLabel,
-  whatsappHref,
   mapsUrl,
   showPhone,
   showMaps,
 }: Props) {
   const [hidden, setHidden] = useState(false);
-  const hasPrimary = showPhone || Boolean(whatsappHref);
-  const hasActions = hasPrimary || showMaps;
+  const hasActions = showPhone || showMaps;
 
   useEffect(() => {
     if (!hasActions) return;
@@ -58,19 +54,9 @@ export default function PublicActions({
       }
     };
 
-    const onFocusIn = (event: FocusEvent) => {
-      const target = event.target;
-      const insideControl =
-        target instanceof HTMLElement && target.closest("[data-mobile-cta-hide]") !== null;
-      setHidden(isEditable(target) || insideControl);
-    };
+    const onFocusIn = (event: FocusEvent) => setHidden(isEditable(event.target));
     const onFocusOut = () => {
-      window.setTimeout(() => {
-        const active = document.activeElement;
-        const insideControl =
-          active instanceof HTMLElement && active.closest("[data-mobile-cta-hide]") !== null;
-        setHidden(isEditable(active) || insideControl);
-      }, 0);
+      window.setTimeout(() => setHidden(isEditable(document.activeElement)), 0);
     };
 
     document.addEventListener("click", onClick);
@@ -98,38 +84,27 @@ export default function PublicActions({
   return (
     <nav className="mobile-cta" aria-label="Hızlı iletişim">
       <div className="mobile-cta__inner">
-        {whatsappHref ? (
-          <a
-            href={whatsappHref}
-            target="_blank"
-            rel="noreferrer"
-            data-event="whatsapp"
-            className="button button--primary"
-          >
-            WhatsApp
-          </a>
-        ) : null}
-        {showPhone ? (
+        {showPhone && (
           <a
             href={phoneHref}
             data-event="ara"
-            className={whatsappHref ? "button button--metal" : "button button--primary"}
+            className="button button--primary"
             aria-label={`Hemen ara — ${phoneLabel}`}
           >
-            Hemen ara
+            Ara
           </a>
-        ) : null}
-        {!hasPrimary && showMaps ? (
+        )}
+        {showMaps && (
           <a
             href={mapsUrl}
             target="_blank"
             rel="noreferrer"
             data-event="yol_tarifi"
-            className="button button--metal"
+            className="button button--secondary"
           >
             Yol tarifi
           </a>
-        ) : null}
+        )}
       </div>
     </nav>
   );
