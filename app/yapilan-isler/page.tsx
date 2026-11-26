@@ -43,18 +43,18 @@ export default async function ArchivePage({
 
   return (
     <ScrollRevealSection>
-      <div className="archive-hero on-dark">
+      <div className="archive-hero">
         <div className="section__inner archive-hero__inner" data-gsap-item>
-          <div className="tech-eyebrow">
-            <span aria-hidden="true" className="tech-eyebrow__bar" />
-            <span>ONARIM ARŞİVİ // BELİRTİ · TEŞHİS · UYGULAMA · SONUÇ</span>
+          <div className="eyebrow">
+            <span aria-hidden="true" className="eyebrow__dot" />
+            <span>Atölye kayıtları</span>
           </div>
           <h1 id="arsiv-baslik" className="page-title">
             Yapılan işler
           </h1>
           <p className="page-intro">
             Gerçek onarım kayıtlarında aracın verdiği belirti, ölçümle konulan teşhis, yapılan
-            uygulama ve teslim sonucunu birlikte incelersin.
+            uygulama ve teslim sonucunu birlikte görebilirsin.
           </p>
         </div>
       </div>
@@ -84,17 +84,12 @@ export default async function ArchivePage({
 
         {jobs.length === 0 ? (
           <div className="empty-state" data-gsap-item>
-            <p className="empty-state__code">ARŞİV DURUMU // 0 YAYIMLANMIŞ KAYIT</p>
-            <p className="empty-state__title">Henüz yayımlanmış iş yok.</p>
+            <p className="empty-state__title">Henüz yayımlanmış iş kaydı yok.</p>
             <p className="empty-state__sub">
-              Müşteri onayı alınmış gerçek atölye onarımları yayımlandığında burada dört aşamalı
-              kayıtlarıyla listelenir.
+              Müşteri izni alınmış gerçek onarım örnekleri eklendiğinde burada listelenir.
             </p>
             <p className="archive-empty__link">
-              <Link href="/#anatomi" className="button button--secondary button--small">
-                3B Kesit ve Simülatörü İncele
-              </Link>{" "}
-              <Link href="/" className="text-link">
+              <Link href="/" className="button button--secondary button--small">
                 Ana sayfaya dön
               </Link>
             </p>

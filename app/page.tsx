@@ -2,10 +2,8 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import HeroStage from "@/components/motion/HeroStage";
-import AlternatorFrameStage from "@/components/motion/AlternatorFrameStage";
-import DiagnosticFrameLab from "@/components/motion/DiagnosticFrameLab";
 import ServicesMatrix from "@/components/motion/ServicesMatrix";
-import ProtocolTimeline from "@/components/motion/ProtocolTimeline";
+import WorkflowSection from "@/components/motion/WorkflowSection";
 import ScrollRevealSection from "@/components/motion/ScrollRevealSection";
 import { getBusiness, listPublishedJobs } from "@/lib/store";
 import { getApprovedServices, getHeroPhoto } from "@/lib/content";
@@ -45,7 +43,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 function heroTitleLines(title: string): string[] {
   const words = title.trim().split(/\s+/);
-  if (words.length === 3) return words;
+  if (words.length === 3) return [words.slice(0, 2).join(" "), words[2]];
   if (words.length > 1) return [words.slice(0, -1).join(" "), words[words.length - 1]];
   return words;
 }
@@ -80,25 +78,19 @@ export default async function HomePage() {
         hasServices={services.length > 0}
       />
 
-      {/* Chapter 02: Pinned 72-Frame 3D Studio Cutaway Scrollytelling */}
-      <AlternatorFrameStage />
-
-      {/* Chapter 03: Interactive Vehicle X-Ray & Live Oscilloscope Frame Lab */}
-      <DiagnosticFrameLab />
-
-      {/* Chapter 04: Monumental Editorial Approved Services Matrix */}
       {services.length > 0 && <ServicesMatrix services={services} />}
 
-      {/* Chapter 05: Scroll-Scrubbed 4-Step Copper Circuit Repair Discipline */}
-      <ProtocolTimeline />
+      <WorkflowSection />
 
-      {/* Chapter 06: Published Real Work Showcase (Only when real published jobs exist) */}
       {leadJob && (
-        <section aria-labelledby="isler-baslik" className="section work-feature">
+        <section aria-labelledby="isler-baslik" className="section section--white work-feature">
           <ScrollRevealSection className="section__inner">
             <div className="work-feature__head" data-gsap-item>
               <div className="section-head">
-                <span aria-hidden="true" className="section-rule" />
+                <div className="eyebrow">
+                  <span aria-hidden="true" className="eyebrow__dot" />
+                  <span>Örnek onarımlar</span>
+                </div>
                 <h2 id="isler-baslik" className="section-title">
                   Yapılan işler
                 </h2>
@@ -109,14 +101,14 @@ export default async function HomePage() {
             </div>
 
             <div className="work-feature__grid">
-              <figure className="work-feature__figure" data-gsap-mask>
+              <figure className="work-feature__figure" data-gsap-item>
                 <div className="work-feature__frame">
                   <Image
                     src={leadJob.cover}
                     alt={leadJob.alt}
                     fill
                     loading="lazy"
-                    sizes="(min-width: 961px) 62vw, 100vw"
+                    sizes="(min-width: 961px) 640px, 100vw"
                     className="work-feature__image"
                   />
                 </div>
@@ -142,10 +134,9 @@ export default async function HomePage() {
                 <div className="work-feature__actions">
                   <Link
                     href={`/yapilan-isler/${leadJob.slug}`}
-                    data-cursor="DOSYA"
                     className="button button--primary button--small"
                   >
-                    İşi incele
+                    Detayı incele
                   </Link>
                 </div>
               </div>
@@ -170,19 +161,16 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Chapter 07: Obsidian Command Bay — Verified Location & Contact */}
       <section id="konum" aria-labelledby="konum-baslik" className="contact on-dark">
         <ScrollRevealSection className="section__inner">
-          <div className="contact__top" data-gsap-item>
-            <div className="section-head">
-              <div className="tech-eyebrow">
-                <span aria-hidden="true" className="tech-eyebrow__bar" />
-                <span>ATÖLYE KONUMU &amp; DOĞRUDAN İLETİŞİM</span>
-              </div>
-              <h2 id="konum-baslik" className="section-title">
-                Konum ve iletişim
-              </h2>
+          <div className="section-head" data-gsap-item>
+            <div className="eyebrow eyebrow--on-dark">
+              <span aria-hidden="true" className="eyebrow__dot" />
+              <span>İletişim ve ulaşım</span>
             </div>
+            <h2 id="konum-baslik" className="section-title">
+              Konum ve iletişim
+            </h2>
           </div>
 
           {contact.hasDetails ? (
@@ -261,7 +249,7 @@ export default async function HomePage() {
                         data-event="yol_tarifi"
                         className="button button--on-dark"
                       >
-                        Yol tarifi
+                        Yol tarifi al
                       </a>
                     )}
                     {contact.whatsapp && (
@@ -288,13 +276,9 @@ export default async function HomePage() {
             </div>
           ) : (
             <div className="contact__empty-card" data-gsap-item>
-              <div className="contact__empty-indicator">
-                <span aria-hidden="true" className="contact__empty-dot" />
-                <span>DOĞRULAMA BEKLENİYOR</span>
-              </div>
               <p className="contact__empty">
                 İletişim bilgileri doğrulandığında açık adres, çalışma saatleri, telefon ve yol
-                tarifi bağlantısı burada yayımlanır.
+                tarifi bağlantısı burada yer alır.
               </p>
             </div>
           )}

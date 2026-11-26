@@ -1,9 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
-import "@fontsource/barlow-condensed/latin-600.css";
-import "@fontsource/barlow-condensed/latin-ext-600.css";
-import "@fontsource/barlow-condensed/latin-700.css";
-import "@fontsource/barlow-condensed/latin-ext-700.css";
 import "@fontsource/instrument-sans/latin-400.css";
 import "@fontsource/instrument-sans/latin-ext-400.css";
 import "@fontsource/instrument-sans/latin-500.css";
@@ -16,7 +12,6 @@ import type { ReactNode } from "react";
 import "./globals.css";
 import SiteHeader from "@/components/SiteHeader";
 import PublicActions from "@/components/PublicActions";
-import PrecisionCursor from "@/components/motion/PrecisionCursor";
 import { getBusiness } from "@/lib/store";
 import { getApprovedServices, getHeroPhoto } from "@/lib/content";
 import { getVerifiedContact } from "@/lib/contact";
@@ -24,7 +19,7 @@ import { buildAutoRepairJsonLd } from "@/lib/structured-data";
 import { getSiteUrl, isIndexableProduction } from "@/lib/seo";
 
 export const viewport: Viewport = {
-  themeColor: "#090D16",
+  themeColor: "#F4F1EA",
   width: "device-width",
   initialScale: 1,
   colorScheme: "light",
@@ -106,7 +101,6 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             dangerouslySetInnerHTML={{ __html: safeJson }}
           />
         )}
-        <PrecisionCursor />
         <SiteHeader
           name={business.name}
           phoneHref={contact.phoneHref}
@@ -120,21 +114,16 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <footer className="site-footer">
           <div className="site-footer__inner">
             <div className="site-footer__identity">
-              <div className="site-footer__kicker">
-                <span aria-hidden="true" className="site-footer__rule" />
-                <span>OTO ELEKTRİK &amp; ÖLÇÜM MİMARİSİ</span>
-              </div>
               <p className="site-footer__brand" translate="no">
                 {business.name}
               </p>
               <p className="site-footer__tagline">{business.heroSubtitle}</p>
             </div>
             <nav aria-label="Alt bilgi" className="site-footer__nav">
-              <Link href="/#anatomi">3B Kesit</Link>
-              <Link href="/#simulasyon">Simülatör</Link>
               {services.length > 0 && <Link href="/#hizmetler">Hizmetler</Link>}
+              <Link href="/#is-akisi">Nasıl çalışıyoruz</Link>
               <Link href="/yapilan-isler">Yapılan işler</Link>
-              <Link href="/#konum">Konum</Link>
+              <Link href="/#konum">İletişim</Link>
             </nav>
             <div className="site-footer__bottom">
               <p className="site-footer__legal">

@@ -14,7 +14,7 @@ export default function JobCard({ job }: { job: Job }) {
           alt={job.alt}
           width={960}
           height={640}
-          sizes="(min-width: 961px) 24rem, (min-width: 621px) 18rem, 100vw"
+          sizes="(min-width: 961px) 22rem, (min-width: 621px) 16rem, 100vw"
           loading="lazy"
           className="archive-item__image"
         />
@@ -26,13 +26,13 @@ export default function JobCard({ job }: { job: Job }) {
           {job.vehicle && <span>· {job.vehicle}</span>}
         </p>
         <h2>
-          <Link href={href} data-cursor="DOSYA" className="archive-item__title">
+          <Link href={href} className="archive-item__title">
             {job.title}
           </Link>
         </h2>
         <p className="archive-item__excerpt">{job.result}</p>
         <Link href={href} className="text-link archive-item__link">
-          Onarım dosyasını incele →
+          İşi incele →
         </Link>
       </div>
     </article>

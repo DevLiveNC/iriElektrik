@@ -24,39 +24,20 @@ export default function ScrollRevealSection({ children, className }: Props) {
       if (items.length > 0) {
         gsap.fromTo(
           items,
-          { opacity: 0, y: 28 },
+          { opacity: 0, y: 18 },
           {
             opacity: 1,
             y: 0,
-            duration: 0.8,
-            stagger: 0.09,
+            duration: 0.6,
+            stagger: 0.07,
             ease: "power3.out",
             scrollTrigger: {
               trigger: el,
-              start: "top 84%",
-            },
-          },
-        );
-      }
-
-      const masks = el.querySelectorAll("[data-gsap-mask]");
-      masks.forEach((mask) => {
-        gsap.fromTo(
-          mask,
-          { clipPath: "inset(10% 0% 10% 0%)", opacity: 0 },
-          {
-            clipPath: "inset(0% 0% 0% 0%)",
-            opacity: 1,
-            duration: 1.0,
-            ease: "expo.out",
-            clearProps: "clipPath",
-            scrollTrigger: {
-              trigger: mask,
               start: "top 85%",
             },
           },
         );
-      });
+      }
     }, el);
 
     return () => ctx.revert();

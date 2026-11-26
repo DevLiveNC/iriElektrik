@@ -88,14 +88,14 @@ export default async function JobDetailPage({
           </p>
         </div>
 
-        <figure className="job-cover" data-gsap-mask>
+        <figure className="job-cover" data-gsap-item>
           <div className="job-cover__frame">
             <Image
               src={job.cover}
               alt={job.alt}
               fill
               priority
-              sizes="(min-width: 1024px) 1040px, 100vw"
+              sizes="(min-width: 1024px) 980px, 100vw"
               className="job-cover__image"
             />
           </div>
