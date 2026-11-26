@@ -49,6 +49,9 @@ function normalizeServices(value: unknown): Service[] {
       symptom: asString(row.symptom),
       service: asString(row.service),
       approved: asBoolean(row.approved),
+      image: asString(row.image),
+      imageAlt: asString(row.imageAlt),
+      proposed: asBoolean(row.proposed),
     };
   });
 }
@@ -73,6 +76,11 @@ export function normalizeBusiness(value: Partial<Business> | null | undefined): 
     heroTitle: asString(raw.heroTitle) || "Aracın elektriğini çözüyoruz.",
     heroSubtitle:
       asString(raw.heroSubtitle) ||
+      "Akü, şarj, marş, aydınlatma ve tesisat arızalarında ölçüm ve arıza tespiti.",
+    heroSubtitleSecondary: asString(raw.heroSubtitleSecondary),
+    heroSecondaryEnabled: asBoolean(raw.heroSecondaryEnabled),
+    shortDescription:
+      asString(raw.shortDescription) ||
       "Akü, şarj, marş, aydınlatma ve tesisat arızalarında ölçüm ve arıza tespiti.",
     heroImage: asString(raw.heroImage),
     heroImageAlt: asString(raw.heroImageAlt),

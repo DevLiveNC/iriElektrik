@@ -1,15 +1,14 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
-import "@fontsource/instrument-sans/latin-400.css";
-import "@fontsource/instrument-sans/latin-ext-400.css";
-import "@fontsource/instrument-sans/latin-500.css";
-import "@fontsource/instrument-sans/latin-ext-500.css";
-import "@fontsource/instrument-sans/latin-600.css";
-import "@fontsource/instrument-sans/latin-ext-600.css";
-import "@fontsource/instrument-sans/latin-700.css";
-import "@fontsource/instrument-sans/latin-ext-700.css";
+import "@fontsource-variable/big-shoulders-display/wght";
+import "@fontsource-variable/source-sans-3/wght.css";
+import "@fontsource/ibm-plex-mono/latin-400.css";
+import "@fontsource/ibm-plex-mono/latin-ext-400.css";
+import "@fontsource/ibm-plex-mono/latin-500.css";
+import "@fontsource/ibm-plex-mono/latin-ext-500.css";
 import type { ReactNode } from "react";
 import "./globals.css";
+import "./night-bay.css";
 import SiteHeader from "@/components/SiteHeader";
 import PublicActions from "@/components/PublicActions";
 import { getBusiness } from "@/lib/store";
@@ -17,9 +16,10 @@ import { getApprovedServices, getHeroPhoto } from "@/lib/content";
 import { getVerifiedContact } from "@/lib/contact";
 import { buildAutoRepairJsonLd } from "@/lib/structured-data";
 import { getSiteUrl, isIndexableProduction } from "@/lib/seo";
+import { UI } from "@/data/landing-content";
 
 export const viewport: Viewport = {
-  themeColor: "#F4F1EA",
+  themeColor: "#0B0C0E",
   width: "device-width",
   initialScale: 1,
   colorScheme: "light",
@@ -51,18 +51,14 @@ export async function generateMetadata(): Promise<Metadata> {
       siteName: business.name,
       title,
       description,
-      images: approvedHero
-        ? [{ url: approvedHero.src, alt: approvedHero.alt }]
-        : undefined,
+      images: approvedHero ? [{ url: approvedHero.src, alt: approvedHero.alt }] : undefined,
     },
     twitter: {
       card: approvedHero ? "summary_large_image" : "summary",
       title,
       description,
     },
-    robots: indexable
-      ? { index: true, follow: true }
-      : { index: false, follow: false },
+    robots: indexable ? { index: true, follow: true } : { index: false, follow: false },
   };
 }
 
@@ -93,19 +89,17 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     <html lang="tr" id="ust">
       <body className="site-body">
         <a href="#icerik" className="skip-link">
-          İçeriğe atla
+          {UI.skipToContent}
         </a>
-        {safeJson && (
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: safeJson }}
-          />
-        )}
+        {safeJson ? (
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJson }} />
+        ) : null}
         <SiteHeader
           name={business.name}
           phoneHref={contact.phoneHref}
           phoneLabel={contact.phone}
           showPhone={contact.hasPhone}
+          whatsappHref={contact.whatsapp}
           hasServices={services.length > 0}
         />
         <main id="icerik" tabIndex={-1} className="site-main">
@@ -113,14 +107,14 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         </main>
         <footer className="site-footer">
           <div className="site-footer__inner">
-            <div className="site-footer__identity">
+            <div>
               <p className="site-footer__brand" translate="no">
                 {business.name}
               </p>
-              <p className="site-footer__tagline">{business.heroSubtitle}</p>
+              <p className="site-footer__tagline">{business.shortDescription}</p>
             </div>
             <nav aria-label="Alt bilgi" className="site-footer__nav">
-              {services.length > 0 && <Link href="/#hizmetler">Hizmetler</Link>}
+              {services.length > 0 ? <Link href="/#hizmetler">Hizmetler</Link> : null}
               <Link href="/#is-akisi">Nasıl çalışıyoruz</Link>
               <Link href="/yapilan-isler">Yapılan işler</Link>
               <Link href="/#konum">İletişim</Link>
@@ -130,7 +124,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
                 © {new Date().getFullYear()} {business.name}
               </p>
               <a href="#ust" className="site-footer__top-link">
-                Yukarı çık ↑
+                {UI.backToTop}
               </a>
             </div>
           </div>
@@ -138,6 +132,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <PublicActions
           phoneHref={contact.phoneHref}
           phoneLabel={contact.phone}
+          whatsappHref={contact.whatsapp}
           mapsUrl={contact.mapsUrl}
           showPhone={contact.hasPhone}
           showMaps={contact.hasMaps}

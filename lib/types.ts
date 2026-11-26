@@ -6,6 +6,12 @@ export interface Service {
   symptom: string;
   service: string;
   approved: boolean;
+  /** İşletmenin yüklediği gerçek fotoğraf (yoksa temsili görsel kullanılır). */
+  image?: string;
+  /** Gerçek fotoğrafın Türkçe alt metni. */
+  imageAlt?: string;
+  /** Kapsam genişletmesiyle eklenmiş, henüz resmî teyit edilmemiş hizmet. */
+  proposed?: boolean;
 }
 
 export interface BusinessHours {
@@ -31,6 +37,12 @@ export interface Business {
   verified: boolean;
   heroTitle: string;
   heroSubtitle: string;
+  /** Resmî alt başlığın altında gösterilecek isteğe bağlı ikinci satır. */
+  heroSubtitleSecondary: string;
+  /** İkinci satır yalnızca işletme açıkça açarsa gösterilir. */
+  heroSecondaryEnabled: boolean;
+  /** Footer ve kısa tanım için kullanılan özet cümle. */
+  shortDescription: string;
   heroImage: string;
   heroImageAlt: string;
   heroPhotoApproved: boolean;
@@ -65,6 +77,8 @@ export const CATEGORIES = [
   "Marş ve alternatör",
   "Aydınlatma",
   "Tesisat ve arıza tespiti",
+  "Teyp ve multimedya",
+  "Ses sistemi",
 ] as const;
 
 export type Category = (typeof CATEGORIES)[number];
