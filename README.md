@@ -1,14 +1,15 @@
 # İri Oto Elektrik
 
-Türkiye’de yerel bir oto elektrik atölyesi için kobalt + bakır kimlik taşıyan, mobil öncelikli Next.js (App Router) sitesi ve yönetim paneli.
+Türkiye’de yerel bir oto elektrik atölyesi için siyah, beyaz, bej ve kırmızı kurumsal kimlik taşıyan, mobil öncelikli Next.js (App Router) sitesi ve yönetim paneli.
 
 > Varsayılan `data/seed.json` yalnızca güvenli boş iletişim alanları, brief’te onaylanmış genel hizmet metinleri ve boş iş arşivi içerir. Üretimde yalnızca işletme tarafından doğrulanmış bilgiler ve müşteri izni alınmış gerçek fotoğraflar yayımlanır.
 
 ## Öne çıkanlar
 
-- **Public site:** porselen zemin, gece mavisi üst gezinme/iletişim bandı, kobalt birincil eylemler, bakır kısa başlık çizgileri.
-- **Hero:** masaüstünde %44 metin / %56 kenara uzanan fotoğraf. Onaylı atölye fotoğrafı yoksa production kompakt tipografik hero gösterir; yerel geliştirme, Vercel preview veya `DESIGN_PREVIEW=1` ortamında temsili fotoğraf açıkça etiketlenerek görünür.
-- **Hizmetler:** hero’nun hemen altında ince çizgilerle ayrılan, belirti + yapılan iş düzeninde onaylı servis listesi. Onaylı hizmet yoksa bölüm ve menü öğesi gizlenir.
+- **Public site:** sıcak bej (`#F4F1EA`), saf beyaz (`#FFFFFF`), kurumsal siyah (`#121212`) ve kırmızı (`#C92A2A`) renk dengesi; abartısız tipografik oranlar ve akıcı GSAP geçişleri (`prefers-reduced-motion` uyumlu).
+- **Hero:** dengeli iki sütunlu kurumsal yerleşim. Onaylı atölye fotoğrafı yoksa production sade tipografik hero gösterir; yerel geliştirme, Vercel preview veya `DESIGN_PREVIEW=1` ortamında temsili fotoğraf açıkça etiketlenerek görünür.
+- **Hizmetler (`#hizmetler`):** 2 sütunlu sade kart düzeninde sürücünün fark ettiği belirti + atölyede yapılan işlem listesi. Onaylı hizmet yoksa bölüm ve menü öğesi gizlenir.
+- **Nasıl çalışıyoruz (`#is-akisi`):** GSAP `ScrollTrigger` ile kaydırmaya duyarlı 4 adımlı iş akışı (şikâyeti dinleme, ölçümle arıza tespiti, açık bilgilendirme/onarım, yük altında son kontrol ve teslim).
 - **İşler:** yalnızca kapak fotoğrafı, alt metni ve dört aşama metni eksiksiz olan yayımlanmış gerçek kayıtlar. Ana sayfada tek geniş vitrin; arşivde sade boş durum; detayda “Belirti / Teşhis / Uygulama / Sonuç”.
 - **İletişim:** doğrulanmış adres, telefon, bölge, çalışma saatleri; çalışan `tel:` ve doğrudan Google Maps yol tarifi bağlantısı. Eksik eylem gizlenir, sahte bağlantı üretilmez. Harita iframe’i ilk yüklemeye alınmaz.
 - **Admin:** açık gri yüzey, fotoğraf önizlemeleri, metinle yayın durumları, kobalt “Yeni iş ekle”. Taslak kaydetme, yayımlama, düzenleme, önizleme, yayından kaldırma, arşivleme, sıralama, öne çıkarma ve silme akışları korunur. Fotoğraf yüklemede boyut/tür/magic-byte doğrulaması ve sunucu tarafında oturum kontrolü vardır.

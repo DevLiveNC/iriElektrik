@@ -1,9 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
-import "@fontsource/barlow-condensed/latin-600.css";
-import "@fontsource/barlow-condensed/latin-ext-600.css";
-import "@fontsource/barlow-condensed/latin-700.css";
-import "@fontsource/barlow-condensed/latin-ext-700.css";
 import "@fontsource/instrument-sans/latin-400.css";
 import "@fontsource/instrument-sans/latin-ext-400.css";
 import "@fontsource/instrument-sans/latin-500.css";
@@ -23,7 +19,7 @@ import { buildAutoRepairJsonLd } from "@/lib/structured-data";
 import { getSiteUrl, isIndexableProduction } from "@/lib/seo";
 
 export const viewport: Viewport = {
-  themeColor: "#F7F6F2",
+  themeColor: "#F4F1EA",
   width: "device-width",
   initialScale: 1,
   colorScheme: "light",
@@ -94,7 +90,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     : null;
 
   return (
-    <html lang="tr">
+    <html lang="tr" id="ust">
       <body className="site-body">
         <a href="#icerik" className="skip-link">
           İçeriğe atla
@@ -117,7 +113,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         </main>
         <footer className="site-footer">
           <div className="site-footer__inner">
-            <div>
+            <div className="site-footer__identity">
               <p className="site-footer__brand" translate="no">
                 {business.name}
               </p>
@@ -125,12 +121,18 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             </div>
             <nav aria-label="Alt bilgi" className="site-footer__nav">
               {services.length > 0 && <Link href="/#hizmetler">Hizmetler</Link>}
+              <Link href="/#is-akisi">Nasıl çalışıyoruz</Link>
               <Link href="/yapilan-isler">Yapılan işler</Link>
-              <Link href="/#konum">Konum</Link>
+              <Link href="/#konum">İletişim</Link>
             </nav>
-            <p className="site-footer__legal">
-              © {new Date().getFullYear()} {business.name}
-            </p>
+            <div className="site-footer__bottom">
+              <p className="site-footer__legal">
+                © {new Date().getFullYear()} {business.name}
+              </p>
+              <a href="#ust" className="site-footer__top-link">
+                Yukarı çık ↑
+              </a>
+            </div>
           </div>
         </footer>
         <PublicActions
