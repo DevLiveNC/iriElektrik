@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import JobCard from "@/components/JobCard";
-import ScrollRevealSection from "@/components/motion/ScrollRevealSection";
 import { CATEGORIES } from "@/lib/types";
 import { listPublishedJobs } from "@/lib/store";
 import { isIndexableProduction } from "@/lib/seo";
+import { JOBS_EMPTY_SUB, JOBS_EMPTY_TITLE, JOBS_EYEBROW, UI } from "@/data/landing-content";
 
 export const revalidate = 3600;
 
@@ -42,13 +42,10 @@ export default async function ArchivePage({
   );
 
   return (
-    <ScrollRevealSection>
+    <div className="public-page">
       <div className="archive-hero">
-        <div className="section__inner archive-hero__inner" data-gsap-item>
-          <div className="eyebrow">
-            <span aria-hidden="true" className="eyebrow__dot" />
-            <span>Atölye kayıtları</span>
-          </div>
+        <div className="section__inner archive-hero__inner">
+          <span className="eyebrow">{JOBS_EYEBROW}</span>
           <h1 id="arsiv-baslik" className="page-title">
             Yapılan işler
           </h1>
@@ -60,8 +57,8 @@ export default async function ArchivePage({
       </div>
 
       <section aria-labelledby="arsiv-baslik" className="section__inner archive-content">
-        {allJobs.length > 0 && (
-          <nav aria-label="Kategori filtresi" className="filter-nav" data-gsap-item>
+        {allJobs.length > 0 ? (
+          <nav aria-label="Kategori filtresi" className="filter-nav">
             <Link
               href="/yapilan-isler"
               aria-current={!active ? "page" : undefined}
@@ -80,16 +77,14 @@ export default async function ArchivePage({
               </Link>
             ))}
           </nav>
-        )}
+        ) : null}
 
         {jobs.length === 0 ? (
-          <div className="empty-state" data-gsap-item>
-            <p className="empty-state__title">Henüz yayımlanmış iş kaydı yok.</p>
-            <p className="empty-state__sub">
-              Müşteri izni alınmış gerçek onarım örnekleri eklendiğinde burada listelenir.
-            </p>
+          <div className="empty-state">
+            <p className="empty-state__title">{JOBS_EMPTY_TITLE}</p>
+            <p className="empty-state__sub">{JOBS_EMPTY_SUB}</p>
             <p className="archive-empty__link">
-              <Link href="/" className="button button--secondary button--small">
+              <Link href="/" className="button button--outline-paper button--small">
                 Ana sayfaya dön
               </Link>
             </p>
@@ -102,6 +97,12 @@ export default async function ArchivePage({
           </div>
         )}
       </section>
-    </ScrollRevealSection>
+
+      <div className="section__inner" style={{ paddingBottom: "3.5rem" }}>
+        <Link href="/#hizmetler" className="button button--metal">
+          {UI.servicesCta}
+        </Link>
+      </div>
+    </div>
   );
 }

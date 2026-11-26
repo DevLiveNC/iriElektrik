@@ -16,6 +16,9 @@
     "verified": false,
     "heroTitle": "Aracın elektriğini çözüyoruz.",
     "heroSubtitle": "Akü, şarj, marş, aydınlatma ve tesisat arızalarında ölçüm ve arıza tespiti. Sorunun nedenini sade bir dille anlatıyoruz.",
+    "heroSubtitleSecondary": "Akü, teyp, ses sistemi ve araç lambalarında ölçüm ve uygulama.",
+    "heroSecondaryEnabled": false,
+    "shortDescription": "Akü, şarj, marş, aydınlatma ve tesisat arızalarında ölçüm ve arıza tespiti.",
     "heroImage": "",
     "heroImageAlt": "",
     "heroPhotoApproved": false,
@@ -25,28 +28,60 @@
         "title": "Akü ve şarj sistemi",
         "symptom": "Sabahları marş zorluyor, farlar zayıf yanıyor veya akü uyarı lambası yanıyor.",
         "service": "Akü ölçümü, şarj dinamosu kontrolü, kutup başı ve kablo temizliği, uygun akü değişimi.",
-        "approved": true
+        "approved": true,
+        "image": "",
+        "imageAlt": "",
+        "proposed": false
       },
       {
         "id": "mars-alternator",
         "title": "Marş ve alternatör",
         "symptom": "Kontakta tık sesi geliyor, motor dönmüyor ya da şarj lambası sürüşte yanıyor.",
         "service": "Marş motoru ve alternatör kontrolü, kömür/konjektör incelemesi, onarım veya değişim.",
-        "approved": true
+        "approved": true,
+        "image": "",
+        "imageAlt": "",
+        "proposed": false
       },
       {
         "id": "aydinlatma",
         "title": "Aydınlatma",
         "symptom": "Far, stop veya sinyal lambalarından biri yanmıyor; ampul sık sık patlıyor.",
         "service": "Ampul ve duy kontrolü, sigorta ve röle takibi, far ayarı ve soket onarımı.",
-        "approved": true
+        "approved": true,
+        "image": "",
+        "imageAlt": "",
+        "proposed": false
       },
       {
         "id": "tesisat-ariza",
         "title": "Tesisat ve arıza tespiti",
         "symptom": "Gösterge ışıkları rastgele yanıyor, camlar veya merkezi kilit çalışmıyor.",
         "service": "Arıza tespit cihazıyla tarama, kablo tesisatı kontrolü, oksit ve temas hatası onarımı.",
-        "approved": true
+        "approved": true,
+        "image": "",
+        "imageAlt": "",
+        "proposed": false
+      },
+      {
+        "id": "teyp-multimedia",
+        "title": "Araç teybi ve multimedya",
+        "symptom": "Fabrika teybi açılmıyor, radyo çekmiyor veya ekranlı bir ünite taktırmak istiyorsun.",
+        "service": "Mevcut ünite ve kablo demeti kontrolü; uyumlu teyp veya ekran montajı, anten ve direksiyon kontrol bağlantısının tesisatı bozmadan uygulanması.",
+        "approved": true,
+        "image": "",
+        "imageAlt": "",
+        "proposed": true
+      },
+      {
+        "id": "ses-sistemi",
+        "title": "Ses sistemi",
+        "symptom": "Hoparlör cızırdıyor, ses yetersiz geliyor veya araç içi ses düzenini güçlendirmek istiyorsun.",
+        "service": "Hoparlör, yükselteç ve kablolama kontrolü; ses sistemi montajı ve ayarı, mevcut tesisatı bozmadan uygulama.",
+        "approved": true,
+        "image": "",
+        "imageAlt": "",
+        "proposed": true
       }
     ]
   },

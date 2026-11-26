@@ -100,6 +100,9 @@ const serviceSchema = z.object({
   symptom: z.string().min(5).max(500),
   service: z.string().min(5).max(500),
   approved: z.boolean(),
+  image: imageSchema.default(""),
+  imageAlt: z.string().max(200).default(""),
+  proposed: z.boolean().default(false),
 });
 
 const hoursSchema = z.object({
@@ -125,6 +128,9 @@ const businessBaseSchema = z.object({
   verified: z.boolean(),
   heroTitle: z.string().min(3).max(120),
   heroSubtitle: z.string().min(10).max(300),
+  heroSubtitleSecondary: z.string().max(300).default(""),
+  heroSecondaryEnabled: z.boolean().default(false),
+  shortDescription: z.string().max(300).default(""),
   heroImage: imageSchema.default(""),
   heroImageAlt: z.string().max(200).default(""),
   heroPhotoApproved: z.boolean().default(false),
