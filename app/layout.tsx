@@ -16,6 +16,7 @@ import type { ReactNode } from "react";
 import "./globals.css";
 import SiteHeader from "@/components/SiteHeader";
 import PublicActions from "@/components/PublicActions";
+import PrecisionCursor from "@/components/motion/PrecisionCursor";
 import { getBusiness } from "@/lib/store";
 import { getApprovedServices, getHeroPhoto } from "@/lib/content";
 import { getVerifiedContact } from "@/lib/contact";
@@ -23,7 +24,7 @@ import { buildAutoRepairJsonLd } from "@/lib/structured-data";
 import { getSiteUrl, isIndexableProduction } from "@/lib/seo";
 
 export const viewport: Viewport = {
-  themeColor: "#F7F6F2",
+  themeColor: "#090D16",
   width: "device-width",
   initialScale: 1,
   colorScheme: "light",
@@ -94,7 +95,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     : null;
 
   return (
-    <html lang="tr">
+    <html lang="tr" id="ust">
       <body className="site-body">
         <a href="#icerik" className="skip-link">
           İçeriğe atla
@@ -105,6 +106,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             dangerouslySetInnerHTML={{ __html: safeJson }}
           />
         )}
+        <PrecisionCursor />
         <SiteHeader
           name={business.name}
           phoneHref={contact.phoneHref}
@@ -117,20 +119,31 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         </main>
         <footer className="site-footer">
           <div className="site-footer__inner">
-            <div>
+            <div className="site-footer__identity">
+              <div className="site-footer__kicker">
+                <span aria-hidden="true" className="site-footer__rule" />
+                <span>OTO ELEKTRİK &amp; ÖLÇÜM MİMARİSİ</span>
+              </div>
               <p className="site-footer__brand" translate="no">
                 {business.name}
               </p>
               <p className="site-footer__tagline">{business.heroSubtitle}</p>
             </div>
             <nav aria-label="Alt bilgi" className="site-footer__nav">
+              <Link href="/#anatomi">3B Kesit</Link>
+              <Link href="/#simulasyon">Simülatör</Link>
               {services.length > 0 && <Link href="/#hizmetler">Hizmetler</Link>}
               <Link href="/yapilan-isler">Yapılan işler</Link>
               <Link href="/#konum">Konum</Link>
             </nav>
-            <p className="site-footer__legal">
-              © {new Date().getFullYear()} {business.name}
-            </p>
+            <div className="site-footer__bottom">
+              <p className="site-footer__legal">
+                © {new Date().getFullYear()} {business.name}
+              </p>
+              <a href="#ust" className="site-footer__top-link">
+                Yukarı çık ↑
+              </a>
+            </div>
           </div>
         </footer>
         <PublicActions

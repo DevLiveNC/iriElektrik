@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import ScrollRevealSection from "@/components/motion/ScrollRevealSection";
 import { getPublishedJobBySlug, getRedirect, listPublishedJobs } from "@/lib/store";
 import { isIndexableProduction } from "@/lib/seo";
 
@@ -10,10 +11,10 @@ export const revalidate = 3600;
 const dateFmt = new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium" });
 
 const STEPS = [
-  { key: "symptom", label: "Belirti" },
-  { key: "diagnosis", label: "Teşhis" },
-  { key: "application", label: "Uygulama" },
-  { key: "result", label: "Sonuç" },
+  { key: "symptom", code: "01", label: "Belirti" },
+  { key: "diagnosis", code: "02", label: "Teşhis" },
+  { key: "application", code: "03", label: "Uygulama" },
+  { key: "result", code: "04", label: "Sonuç" },
 ] as const;
 
 export async function generateStaticParams() {
@@ -73,61 +74,68 @@ export default async function JobDetailPage({
   const publishedAt = job.publishedAt ? dateFmt.format(new Date(job.publishedAt)) : null;
 
   return (
-    <article className="job-detail">
-      <Link href="/yapilan-isler" className="breadcrumb">
-        Tüm işler
-      </Link>
-      <p className="job-category">{job.category}</p>
-      <h1 className="job-title">{job.title}</h1>
-      <p className="job-meta">
-        {job.vehicle ? `${job.vehicle} · ` : ""}
-        {publishedAt ?? "Yayımlanmış kayıt"}
-      </p>
-
-      <figure className="job-cover">
-        <div className="job-cover__frame">
-          <Image
-            src={job.cover}
-            alt={job.alt}
-            fill
-            priority
-            sizes="(min-width: 1024px) 960px, 100vw"
-            className="job-cover__image"
-          />
+    <ScrollRevealSection>
+      <article className="job-detail">
+        <div className="job-detail__head" data-gsap-item>
+          <Link href="/yapilan-isler" className="breadcrumb">
+            ← Tüm işler
+          </Link>
+          <p className="job-category">{job.category}</p>
+          <h1 className="job-title">{job.title}</h1>
+          <p className="job-meta tabular">
+            {job.vehicle ? `${job.vehicle} · ` : ""}
+            {publishedAt ?? "Yayımlanmış kayıt"}
+          </p>
         </div>
-        <figcaption className="job-cover__caption">{job.alt}</figcaption>
-      </figure>
 
-      <dl className="job-steps">
-        {STEPS.map((step) => (
-          <div key={step.key} className="job-step">
-            <dt className="job-step__label">{step.label}</dt>
-            <dd className="job-step__value">{job[step.key]}</dd>
+        <figure className="job-cover" data-gsap-mask>
+          <div className="job-cover__frame">
+            <Image
+              src={job.cover}
+              alt={job.alt}
+              fill
+              priority
+              sizes="(min-width: 1024px) 1040px, 100vw"
+              className="job-cover__image"
+            />
           </div>
-        ))}
-      </dl>
+          <figcaption className="job-cover__caption">{job.alt}</figcaption>
+        </figure>
 
-      {gallery.length > 0 && (
-        <section aria-labelledby="galeri-baslik" className="gallery">
-          <h2 id="galeri-baslik" className="section-title">
-            Fotoğraflar
-          </h2>
-          <div className="gallery__grid">
-            {gallery.map((src, index) => (
-              <div key={`${src}-${index}`} className="gallery__frame">
-                <Image
-                  src={src}
-                  alt={`${job.title} — fotoğraf ${index + 1}`}
-                  fill
-                  loading="lazy"
-                  sizes="(min-width: 640px) 50vw, 100vw"
-                  className="gallery__image"
-                />
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-    </article>
+        <dl className="job-steps">
+          {STEPS.map((step) => (
+            <div key={step.key} className="job-step" data-gsap-item>
+              <dt className="job-step__label">
+                <span className="job-step__num tabular">{step.code}</span>
+                <span>{step.label}</span>
+              </dt>
+              <dd className="job-step__value">{job[step.key]}</dd>
+            </div>
+          ))}
+        </dl>
+
+        {gallery.length > 0 && (
+          <section aria-labelledby="galeri-baslik" className="gallery" data-gsap-item>
+            <h2 id="galeri-baslik" className="section-title">
+              Fotoğraflar
+            </h2>
+            <div className="gallery__grid">
+              {gallery.map((src, index) => (
+                <div key={`${src}-${index}`} className="gallery__frame">
+                  <Image
+                    src={src}
+                    alt={`${job.title} — fotoğraf ${index + 1}`}
+                    fill
+                    loading="lazy"
+                    sizes="(min-width: 640px) 50vw, 100vw"
+                    className="gallery__image"
+                  />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+      </article>
+    </ScrollRevealSection>
   );
 }

@@ -6,9 +6,11 @@ Türkiye’de yerel bir oto elektrik atölyesi için kobalt + bakır kimlik taş
 
 ## Öne çıkanlar
 
-- **Public site:** porselen zemin, gece mavisi üst gezinme/iletişim bandı, kobalt birincil eylemler, bakır kısa başlık çizgileri.
-- **Hero:** masaüstünde %44 metin / %56 kenara uzanan fotoğraf. Onaylı atölye fotoğrafı yoksa production kompakt tipografik hero gösterir; yerel geliştirme, Vercel preview veya `DESIGN_PREVIEW=1` ortamında temsili fotoğraf açıkça etiketlenerek görünür.
-- **Hizmetler:** hero’nun hemen altında ince çizgilerle ayrılan, belirti + yapılan iş düzeninde onaylı servis listesi. Onaylı hizmet yoksa bölüm ve menü öğesi gizlenir.
+- **Public site & mimari dizilim:** porselen (`#F5F3EC`) ve derin obsidyen gece (`#080C15`) kontrast ritmi, canlı voltaj ilerleme rayına sahip yapışkan üst gezinme bandı, kobalt birincil eylemler, anodize bakır kurallar ve hassas masaüstü ölçüm imleci (`prefers-reduced-motion` uyumlu).
+- **Kinetik Hero & Telemetri:** GSAP maskeli tipografi açılışı, manyetik düğme etkileşimi, canlı osiloskop telemetri kartı ve alt sistem hızlı geçiş şeridi. Onaylı atölye fotoğrafı yoksa production modunda temsili fotoğraf yerine 3-kanallı canlı teknik osiloskop ekranı gösterilir; yerel geliştirme, Vercel preview veya `DESIGN_PREVIEW=1` ortamında temsili fotoğraf açıkça etiketlenerek görünür.
+- **72-Kare 3B Kesit Animasyonu (`AlternatorFrameStage`):** `npm run frames:generate` ile PBR/SSAA olarak üretilen 72 karelik alternatör & 3-faz bakır stator patlatılmış kesit dizisi (`public/sequences/alternator/frame-00.webp`..`frame-71.webp`), GSAP `ScrollTrigger` sabitleme/kaydırma, doğrudan tuval üzerinde sürükleme, zaman çubuğu ve senkronize Retina CAD çağrı çizgileriyle çalışır.
+- **Canlı Şasi Röntgeni & Osiloskop Kare Simülatörü (`DiagnosticFrameLab`):** Akü/şarj, marş/alternatör, aydınlatma ve tesisat/ECU hatlarında arıza anı ile onarım sonrası kararlı akışı 60 FPS tuval üzerinde karşılaştırır.
+- **Hizmetler & 4-Adım Protokol:** GSAP `ScrollTrigger` ile çizilen bakır-kobalt devre izleri, numaralı editoryal hizmet matrisi (belirti + yapılan iş + simülatör bağlantısı). Onaylı hizmet yoksa bölüm ve menü öğesi gizlenir.
 - **İşler:** yalnızca kapak fotoğrafı, alt metni ve dört aşama metni eksiksiz olan yayımlanmış gerçek kayıtlar. Ana sayfada tek geniş vitrin; arşivde sade boş durum; detayda “Belirti / Teşhis / Uygulama / Sonuç”.
 - **İletişim:** doğrulanmış adres, telefon, bölge, çalışma saatleri; çalışan `tel:` ve doğrudan Google Maps yol tarifi bağlantısı. Eksik eylem gizlenir, sahte bağlantı üretilmez. Harita iframe’i ilk yüklemeye alınmaz.
 - **Admin:** açık gri yüzey, fotoğraf önizlemeleri, metinle yayın durumları, kobalt “Yeni iş ekle”. Taslak kaydetme, yayımlama, düzenleme, önizleme, yayından kaldırma, arşivleme, sıralama, öne çıkarma ve silme akışları korunur. Fotoğraf yüklemede boyut/tür/magic-byte doğrulaması ve sunucu tarafında oturum kontrolü vardır.

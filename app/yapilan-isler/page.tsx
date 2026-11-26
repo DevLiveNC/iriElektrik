@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import JobCard from "@/components/JobCard";
+import ScrollRevealSection from "@/components/motion/ScrollRevealSection";
 import { CATEGORIES } from "@/lib/types";
 import { listPublishedJobs } from "@/lib/store";
 import { isIndexableProduction } from "@/lib/seo";
@@ -41,23 +42,32 @@ export default async function ArchivePage({
   );
 
   return (
-    <div className="section__inner page-head">
-      <section aria-labelledby="arsiv-baslik">
-        <h1 id="arsiv-baslik" className="page-title">
-          Yapılan işler
-        </h1>
-        <p className="page-intro">
-          Gerçek onarım kayıtlarında belirti, teşhis, uygulama ve sonucu birlikte görürsün.
-        </p>
+    <ScrollRevealSection>
+      <div className="archive-hero on-dark">
+        <div className="section__inner archive-hero__inner" data-gsap-item>
+          <div className="tech-eyebrow">
+            <span aria-hidden="true" className="tech-eyebrow__bar" />
+            <span>ONARIM ARŞİVİ // BELİRTİ · TEŞHİS · UYGULAMA · SONUÇ</span>
+          </div>
+          <h1 id="arsiv-baslik" className="page-title">
+            Yapılan işler
+          </h1>
+          <p className="page-intro">
+            Gerçek onarım kayıtlarında aracın verdiği belirti, ölçümle konulan teşhis, yapılan
+            uygulama ve teslim sonucunu birlikte incelersin.
+          </p>
+        </div>
+      </div>
 
+      <section aria-labelledby="arsiv-baslik" className="section__inner archive-content">
         {allJobs.length > 0 && (
-          <nav aria-label="Kategori filtresi" className="filter-nav">
+          <nav aria-label="Kategori filtresi" className="filter-nav" data-gsap-item>
             <Link
               href="/yapilan-isler"
               aria-current={!active ? "page" : undefined}
               className="filter-link"
             >
-              Tümü
+              Tümü ({allJobs.length})
             </Link>
             {availableCategories.map((category) => (
               <Link
@@ -73,9 +83,17 @@ export default async function ArchivePage({
         )}
 
         {jobs.length === 0 ? (
-          <div className="empty-state">
-            <p>Henüz yayımlanmış iş yok.</p>
+          <div className="empty-state" data-gsap-item>
+            <p className="empty-state__code">ARŞİV DURUMU // 0 YAYIMLANMIŞ KAYIT</p>
+            <p className="empty-state__title">Henüz yayımlanmış iş yok.</p>
+            <p className="empty-state__sub">
+              Müşteri onayı alınmış gerçek atölye onarımları yayımlandığında burada dört aşamalı
+              kayıtlarıyla listelenir.
+            </p>
             <p className="archive-empty__link">
+              <Link href="/#anatomi" className="button button--secondary button--small">
+                3B Kesit ve Simülatörü İncele
+              </Link>{" "}
               <Link href="/" className="text-link">
                 Ana sayfaya dön
               </Link>
@@ -89,6 +107,6 @@ export default async function ArchivePage({
           </div>
         )}
       </section>
-    </div>
+    </ScrollRevealSection>
   );
 }
